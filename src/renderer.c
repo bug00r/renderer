@@ -72,7 +72,7 @@ static bool _compute_and_set_z(const float * rz1, const float * rz2, const float
 
 static bool _compute_and_set_z_line(const float * rz1, const float * rz2, const barycentric_t *bc, 
 								    const unsigned int * bi, float * zBuffer) {
-	float z =  *rz1 * (1.f - bc->bc2); 
+	float z =  *rz1 * ( 1.f - bc->bc1 ); 
 	z += *rz2 * bc->bc2; 
 	
 	float * old_z = zBuffer + *bi;
@@ -148,8 +148,10 @@ static bool _compute_sample_bc_and_check_line(vec3_t * _pixelSample, const vec2_
 	barycentric_t * bc = _bc;
 	update_sample(pixelSample, _cursample, curW, curH);
 
-	bc->inside = false;
-	bc->bc2 = (pixelSample->x - pRaster1->x ) / (pRaster2->x - pRaster1->x);
+	//bc->inside = false;
+	//bc->bc2 = (pixelSample->x - pRaster1->x ) / (pRaster2->x - pRaster1->x);
+	bc->bc1 = place_of_vec3(pRaster1, pRaster2, pixelSample) * ( (pRaster2->y - pRaster1->y) / (pRaster2->x - pRaster1->x) );
+	bc->bc2 = place_of_vec3(pRaster2, pRaster1, pixelSample) * ( (pRaster1->y - pRaster2->y) / (pRaster1->x - pRaster2->x) );
 	float edge = place_of_vec3(pRaster1, pRaster2, pixelSample);
 	vec3_t limitvec;
 	vec3_sub_dest(&limitvec, pRaster2, pRaster1);
