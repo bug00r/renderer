@@ -73,7 +73,7 @@ static bool _compute_and_set_z(const float * rz1, const float * rz2, const float
 static bool _compute_and_set_z_line(const float * rz1, const float * rz2, const barycentric_t *bc, 
 								    const unsigned int * bi, float * zBuffer) {
 	float z =  *rz1 * ( 1.f - bc->bc1 ); 
-	z += *rz2 * bc->bc2; 
+	z += *rz2 * bc->bc1; 
 	
 	float * old_z = zBuffer + *bi;
 
@@ -149,16 +149,17 @@ static bool _compute_sample_bc_and_check_line(vec3_t * _pixelSample, const vec2_
 	update_sample(pixelSample, _cursample, curW, curH);
 
 	//bc->inside = false;
-	//bc->bc2 = (pixelSample->x - pRaster1->x ) / (pRaster2->x - pRaster1->x);
-	bc->bc1 = place_of_vec3(pRaster1, pRaster2, pixelSample) * ( (pRaster2->y - pRaster1->y) / (pRaster2->x - pRaster1->x) );
-	bc->bc2 = place_of_vec3(pRaster2, pRaster1, pixelSample) * ( (pRaster1->y - pRaster2->y) / (pRaster1->x - pRaster2->x) );
+	bc->bc1 = (pixelSample->x - pRaster1->x ) / (pRaster2->x - pRaster1->x);
+
 	float edge = place_of_vec3(pRaster1, pRaster2, pixelSample);
+	
 	vec3_t limitvec;
 	vec3_sub_dest(&limitvec, pRaster2, pRaster1);
 	float limit = vec3_length(&limitvec) * 0.5f;
-	if ( ( (edge <= limit && edge >= 0.f) || (edge >= -limit && edge <= 0.f) ) ) {		 
+	if ( ( edge <= limit && edge >= -limit ) ) {		 
 		return false;
 	}	
+
 	return true;								 
 }
 
@@ -368,7 +369,7 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 		  weight2 = ct->_44, 
 		  weight3 = ct->_44, rz1, rz2, rz3;
 	float *  zBuffer = renderer->zBuffer;
-	//bool completeout = true;
+
 	cRGB_t curCol1, *fbc, *txc;
 	//EO VARS
 
@@ -381,13 +382,6 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 	_compute_min_max_w_h(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH,
 						 &pRaster1, &pRaster2, &pRaster3);
 	
-	
-	//ONLY CLIPPING ERROR SEARCH <= REMOVE THIS AFTER FIX OR GAVE UP
-	//printf("vertex:\n"); vec3_print(v1v);vec3_print(v2v);vec3_print(v3v);
-	//printf("NDC:\n"); vec3_print(&pNDC1);vec3_print(&pNDC2);vec3_print(&pNDC3);
-	//printf("RASTER:\n");vec3_print(&pRaster1);vec3_print(&pRaster2);vec3_print(&pRaster3);
-	//printf("RZ(1,2,3): %f %f %f\n", rz1, rz2, rz3);
-	//ONLY CLIPPING ERROR SEARCH
 	
 	//EO BOUNDING BOX
 	//old vERSION JUST WORKING FINE. see below improoved version
