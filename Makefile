@@ -1,4 +1,49 @@
-include ../make_config
+#MAKE?=mingw32-make
+AR?=ar
+ARFLAGS?=rcs
+PATHSEP?=/
+CC=gcc
+BUILDROOT?=build
+
+ifeq ($(CLANG),1)
+	export CC=clang
+endif
+
+BUILDDIR?=$(BUILDROOT)$(PATHSEP)$(CC)
+BUILDPATH?=$(BUILDDIR)$(PATHSEP)
+
+INSTALL_ROOT?=$(BUILDPATH)
+
+ifeq ($(DEBUG),1)
+	export debug=-ggdb -Ddebug=1
+	export isdebug=1
+endif
+
+ifeq ($(ANALYSIS),1)
+	export analysis=-Danalysis=1
+	export isanalysis=1
+endif
+
+ifeq ($(DEBUG),2)
+	export debug=-ggdb -Ddebug=2
+	export isdebug=1
+endif
+
+ifeq ($(DEBUG),3)
+	export debug=-ggdb -Ddebug=3
+	export isdebug=1
+endif
+
+ifeq ($(OUTPUT),1)
+	export outimg= -Doutput=1
+endif
+
+CFLAGS=-std=c11 -Wpedantic -pedantic-errors -Wall -Wextra -O1 $(debug)
+#-ggdb
+#-pg for profiling 
+
+LIB?=-L/c/dev/lib
+INCLUDE?=-I/c/dev/include -I.
 
 LIBNAME=librenderer.a
 OBJS=$(BUILDPATH)renderer.o $(BUILDPATH)camera.o
@@ -6,37 +51,13 @@ SRC_DIR=src/
 SRC_FILES=camera renderer
 SRC=$(patsubst %,$(SRC_DIR)%.c,$(SRC_FILES))
 
-INCLUDEDIR= -I./../math/algorithm/fractals/ \
-			-I./../math/algorithm/noise/ \
-			-I./../math/statistics \
-			-I./../math/vec \
-			-I./../math/mat \
-			-I./../math/utils \
-			-I./../collections/array \
-			-I./../color \
-			-I./../texture \
-			-I./../shape \
-			-I./../mesh \
-			-I./../scene \
-			-I./include
+INCLUDEDIR= $(INCLUDE) -I./include
 
 TESTSRC=test/test_renderer.c
 TESTBIN=test_renderer.exe
 LIB=-lscene -lmesh -lshape -ltexture -lnoise -lfractals -lcrgb_array -lfarray -larray -lcolor -lstatistics -lutilsmath -lmat -lvec
 TESTLIB=-lrenderer 
-LIBDIR=-L$(BUILDDIR) \
-		   -L./../math/algorithm/fractals/$(BUILDDIR) \
-		   -L./../math/algorithm/noise/$(BUILDDIR) \
-		   -L./../scene/$(BUILDDIR) \
-		   -L./../mesh/$(BUILDDIR) \
-		   -L./../shape/$(BUILDDIR) \
-		   -L./../color/$(BUILDDIR) \
-		   -L./../texture/$(BUILDDIR) \
-		   -L./../collections/array/$(BUILDDIR) \
-		   -L./../math/statistics/$(BUILDDIR) \
-		   -L./../math/utils/$(BUILDDIR) \
-		   -L./../math/mat/$(BUILDDIR) \
-		   -L./../math/vec/$(BUILDDIR) 
+LIBDIR=-L$(BUILDDIR) $(LIB)
 
 ifeq ($(isdebug),1)
 	INCLUDEDIR += -I./../collections/linked_list/
@@ -74,4 +95,10 @@ mkbuilddir:
 
 clean:
 	-rm -dr $(BUILDROOT)
-	
+
+install:
+	mkdir -p $(INSTALL_ROOT)include
+	mkdir -p $(INSTALL_ROOT)lib
+	cp ./include/renderer.h $(INSTALL_ROOT)include/renderer.h
+	cp ./include/camera.h $(INSTALL_ROOT)include/camera.h
+	cp $(BUILDPATH)$(LIBNAME) $(INSTALL_ROOT)lib/$(LIBNAME)
