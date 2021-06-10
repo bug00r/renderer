@@ -10,16 +10,6 @@ void setviewport(camera_t *  camera, const float l,const float r,const float t,c
 	curcam->f = far;
 }
 
-void config_camera_opengl(camera_t *  camera, const vec3_t *  from, const vec3_t *  to, 
-                   const float l,const float r,const float t,const float b,const float near,const float far) {
-	camera_t *  curcam = camera;
-	setviewport(curcam,l,r,t,b,near,far);
-	camera_lookAt_opengl(curcam, from, to);
-	createProjectionPerspectiveOpenGl(curcam, l, r, t, b, near, far);
-	//mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
-	mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
-}
-
 void config_camera(camera_t *  camera, const vec3_t *  from, const vec3_t *  to, 
                    const float l,const float r,const float t,const float b,const float near,const float far) {
 	camera_t *  curcam = camera;
@@ -39,11 +29,6 @@ void config_camera_perspective(camera_t *  camera, const vec3_t *  from, const v
 	//mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
 	mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
 }
-
-void camera_lookAt_opengl(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
-	camera_t *  cam = camera;
-}
-	
 
 void 
 camera_lookAt_ortho(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
@@ -78,9 +63,9 @@ camera_lookAt_ortho(camera_t *  camera, const vec3_t *  from, const vec3_t *  to
 	projection._33 = cam->forward.z;
 	projection._43 = 0.f;//vec3_vec3mul(forward, from);//0.f;
 	
-	projection._14 = eye->x;
-	projection._24 = eye->y;
-	projection._34 = eye->z;
+	projection._14 = 0.f;//eye->x;
+	projection._24 = 0.f;//eye->y;
+	projection._34 = 0.f;//eye->z;
 	projection._44 = 1.f;
 	
 	mat4_inverse_dest(&cam->projection, &projection);
@@ -198,83 +183,28 @@ camera_lookAt_perspective(camera_t *  camera, const vec3_t *  from, const vec3_t
 	dest->_41 *= det; dest->_42 *= det; dest->_43 *= det; dest->_44 *= det;
 }
 
-void createProjectionPerspectiveOpenGl(camera_t *  camera, const float l,const float r,const float t,const float b,const float near,const float far) {
-	camera_t *  cam = camera;
-}
-
 void 
 createProjectionOrtho(camera_t *  camera, const float l,const float r,const float t,const float b,const float near,const float far) {
 	camera_t *  cam = camera;
 	cam->view._11 = 2.f/(r-l);
 	cam->view._12 = 0.f;
 	cam->view._13 = 0.f;
-	cam->view._14 = -(r+l)/(r-l);
+	cam->view._14 = -((r+l)/(r-l));
 
 	cam->view._21 = 0.f;
 	cam->view._22 = 2.f/(t-b);
 	cam->view._23 = 0.f;
-	cam->view._24 = -(t+b)/(t-b);
+	cam->view._24 = -((t+b)/(t-b));
 
 	cam->view._31 = 0.f;
 	cam->view._32 = 0.f;
 	cam->view._33 = -2.f/(far-near);
-	cam->view._34 = -(far+near)/(far-near);
+	cam->view._34 = -((far+near)/(far-near));
 
 	cam->view._41 = 0.f;
 	cam->view._42 = 0.f;
 	cam->view._43 = 0.f;
 	cam->view._44 = 1.f;
-}
-
-void
-createProjectionOrtho2(camera_t *  camera,const float r,const float t,const float near,const float far) {
-	camera_t *  cam = camera;
-	cam->view._11 = 1./r;
-	cam->view._12 = 0.f;
-	cam->view._13 = 0.f;
-	cam->view._14 = 0.f;
-	   
-	cam->view._21 = 0.f;
-	cam->view._22 = 1./t;
-	cam->view._23 = 0.f;
-	cam->view._24 = 0.f;
-	   
-	cam->view._31 = 0.f;
-	cam->view._32 = 0.f;
-	cam->view._33 = -2.f/(far-near);
-	cam->view._34 = -(far+near)/(far-near);
-	   
-	cam->view._41 = 0.f;
-	cam->view._42 = 0.f;
-	cam->view._43 = 1.f;
-	cam->view._44 = 1.f;
-}
-#if 0
-	//This is the scratch a pixel version and works fine like the openGL one
-#endif
-void
-createProjectionPerspective_(camera_t *  camera, const float l,const float r,const float t,const float b,const float near,const float far) {
-	camera_t *  cam = camera;
-	float scale = 1 / tan(90.f * 0.5f * M_PI / 180.f); 
-	cam->view._11 = scale;//(2.f*near)/(r-l);//scale;//
-	cam->view._12 = 0.f;
-	cam->view._13 = 0.f;//(r+l)/(r-l);
-	cam->view._14 = 0.f;
-	   
-	cam->view._21 = 0.f;
-	cam->view._22 = scale;//(2.f*near)/(t-b); //scale;//
-	cam->view._23 = 0.f;//(t+b)/(t-b);
-	cam->view._24 = 0.f;
-	   
-	cam->view._31 = 0.f;
-	cam->view._32 = 0.f;
-	cam->view._33 = -far/(far-near);
-	cam->view._34 = -(far*near)/(far-near);
-	   
-	cam->view._41 = 0.f;
-	cam->view._42 = 0.f;
-	cam->view._43 = 1.f;
-	cam->view._44 = 0.f;
 }
 
 #if 0
