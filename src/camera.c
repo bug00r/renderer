@@ -63,12 +63,39 @@ camera_lookAt_ortho(camera_t *  camera, const vec3_t *  from, const vec3_t *  to
 	projection._33 = cam->forward.z;
 	projection._43 = 0.f;//vec3_vec3mul(forward, from);//0.f;
 	
-	projection._14 = 0.f;//eye->x;
-	projection._24 = 0.f;//eye->y;
-	projection._34 = 0.f;//eye->z;
+	projection._14 = -eye->x;
+	projection._24 = -eye->y;
+	projection._34 = -eye->z;
 	projection._44 = 1.f;
 	
 	mat4_inverse_dest(&cam->projection, &projection);
+}
+
+void __calc_clipline(camera_t *  camera) {
+	camera_t *cam = camera;
+	clip_t *clip_line = &cam->clip_line;
+	//corrected invalid left (readon in short: calculating row and column major mix :( ))
+	vec3_t left;
+	vec3_negate_dest(&left, &cam->left);
+
+	vec3_t forward;
+	vec3_negate_dest(&forward, &cam->forward);
+	// EOF correction
+
+	//test with constant
+	float half_length = 5.f;
+
+	vec3_mul(&forward, cam->n);
+
+	vec3_mul_dest(&clip_line->start, &left, -half_length);
+	vec3_add(&clip_line->start, &forward);
+
+	vec3_mul_dest(&clip_line->end, &left, half_length);
+	vec3_add(&clip_line->end, &forward);
+
+	vec3_mul_dest(&clip_line->up_start, &cam->up, -half_length);
+
+	vec3_mul_dest(&clip_line->up_end, &cam->up, half_length);
 }
 
 void 
@@ -92,6 +119,8 @@ camera_lookAt_perspective(camera_t *  camera, const vec3_t *  from, const vec3_t
 	vec3_cross_dest(u, f, l);
 	vec3_normalize(u);
 	
+	__calc_clipline(cam);
+
 	mat4_t m = { l->x	,u->x,	-f->x	,eye->x,	
 				 l->y	,u->y,	-f->y	,eye->y,	
 				 l->z	,u->z,	-f->z	,eye->z, 	

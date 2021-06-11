@@ -233,7 +233,7 @@ static bool _world_to_raster(const vec3_t * _v, vec3_t * _ndc, vec3_t * _raster,
 	ndc->z += (v->x * ct->_31) + (v->y * ct->_32) + (v->z * ct->_33);// + ct->_34;
 	*weight += (v->x * ct->_41) + (v->y * ct->_42) + (v->z * ct->_43);// + ct->_44;
 	
-	if (*weight < 0.f) return true;
+	//if (*weight < 0.f) return true;
 	
 	if (*weight != 1.f && *weight != 0.f){
 		*weight = 1.f/(*weight); ndc->x *= *weight; ndc->y *= *weight; ndc->z *= *weight;

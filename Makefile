@@ -43,7 +43,7 @@ CFLAGS=-std=c11 -Wpedantic -pedantic-errors -Wall -Wextra -O1 $(debug)
 #-pg for profiling 
 
 LIB?=-L/c/dev/lib
-INCLUDE?=-I/c/dev/include -I.
+INCLUDE?= -I/c/dev/include -I./include
 
 LIBNAME=librenderer.a
 OBJS=$(BUILDPATH)renderer.o $(BUILDPATH)camera.o
@@ -51,11 +51,11 @@ SRC_DIR=src/
 SRC_FILES=camera renderer
 SRC=$(patsubst %,$(SRC_DIR)%.c,$(SRC_FILES))
 
-INCLUDEDIR= $(INCLUDE) -I./include
+INCLUDEDIR= $(INCLUDE)
 
 TESTSRC=test/test_renderer.c
 TESTBIN=test_renderer.exe
-LIB=-lscene -lmesh -lshape -ltexture -lnoise -lfractals -lcrgb_array -lfarray -larray -lcolor -lstatistics -lutilsmath -lmat -lvec
+LIBS=-lscene -lmesh -lshape -ltexture -lnoise -lfractals -lcrgb_array -lfarray -larray -lcolor -lstatistics -lutilsmath -lmat -lvec
 TESTLIB=-lrenderer 
 LIBDIR=-L$(BUILDDIR) $(LIB)
 
@@ -83,7 +83,7 @@ $(BUILDPATH)camera.o: src/camera.c
 	$(CC) $(CFLAGS) -c src/camera.c -o $(BUILDPATH)camera.o  $(INCLUDEDIR)
 	
 $(BUILDPATH)$(TESTBIN):
-	$(CC) $(CFLAGS) $(TESTSRC) -o $(BUILDPATH)$(TESTBIN) $(INCLUDEDIR) $(LIBDIR) $(LIBDIR) $(LIB) $(TESTLIB)
+	$(CC) $(CFLAGS) $(TESTSRC) -o $(BUILDPATH)$(TESTBIN) $(INCLUDEDIR) $(LIBDIR) $(LIBDIR) $(LIBS) $(TESTLIB)
 	
 .PHONY: clean mkbuilddir test
 

@@ -16,7 +16,14 @@
 #ifndef M_PI
 	#define M_PI 3.14159265358979323846264338327
 #endif
-	
+
+typedef struct {
+	vec3_t start;
+	vec3_t end;
+	vec3_t up_start;
+	vec3_t up_end;
+} clip_t;
+
 typedef struct {
 	mat4_t view;
 	mat4_t projection;
@@ -24,6 +31,7 @@ typedef struct {
 	vec3_t forward;
 	vec3_t left;
 	vec3_t up;
+	clip_t clip_line;
 	float l,r,t,b,n,f;
 } camera_t;
 

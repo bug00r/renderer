@@ -36,13 +36,123 @@ char * create_string(const char * msg, ...) {
 #include "test_include_cone.c"
 #include "test_include_square_block.c"
 
+/**
+ * renderer_t * create_renderer_perspective(int width, int height,
+									vec3_t *from, vec3_t* to, 
+									float zoom, 
+									float left, float right, 
+									float top, float bottom, 
+									float near, float far,
+									cRGB_t *bgcolor,
+									unsigned int samplestep) {
+    renderer_t *renderer = renderer_new(width, height, bgcolor, samplestep);
+	renderer->projection = RP_PERSPECTIVE;
+	config_camera_perspective(&renderer->camera, from, to, zoom * left, zoom * right, zoom * top, zoom * bottom, near, far);
+	return renderer;
+}
+*/
+
+static float place_of_vec3_z(const vec3_t *  s, const vec3_t *  e, const vec3_t *  p) {
+	return (p->z - s->z) * (e->x - s->x) - (p->x - s->x) * (e->z - s->z);
+}
+
+static void test_clip_line() {
+	int width		= 512;
+	int height		= 512;
+	vec3_t from 	= { 0.f, 0.f, 0.f };
+	vec3_t to 		= { 0.f, 0.f, 1.f };
+	cRGB_t bgcolor	= { 0.f, 0.f, 0.f };
+	unsigned int samplestep = 1;
+	float zoom 		= 1.f;
+	float view 		= 4.f;
+	float left 		= -view;
+	float right 	= view;
+	float bottom 	= -view;
+	float top 		= view;
+	float near		= 1.f;
+	float far		= 6.f;
+	renderer_t * renderer = create_renderer_perspective( width, height, &from, &to, zoom, left, right, top, bottom, near, far, &bgcolor, samplestep);
+
+	vec3_t *v_start = &renderer->camera.clip_line.start;
+	vec3_t *v_end = &renderer->camera.clip_line.end;
+
+	vec3_t *up_start = &renderer->camera.clip_line.start;
+	vec3_t *up_end = &renderer->camera.clip_line.end;
+
+	vec3_print(v_start);
+	vec3_print(v_end);
+	printf("UP:\n");
+	vec3_print(up_start);
+	vec3_print(up_end);
+	//testline 1: no intersection, in front
+	vec3_t p1_s = {-.4f, .5f, 1.8f};
+	vec3_t p1_e = {.8f, .2f, 1.8f};
+	//testline 2: no intersection,. on the backend, complete ignored
+	vec3_t p2_s = {-.4f, .5f, -1.f};
+	vec3_t p2_e = {.4f, .5f, -1.f};
+	//testline 3: intersection at z = 0, x = 1 and y = 0.5 
+		// we have to check if one point is on the left and one on the right
+	vec3_t p3_s = {-.4f, .5f, 1.9f};
+	vec3_t p3_e = {.8f, .2f, .3f};
+
+	//both in front float place_of_vec3(const vec3_t *  s, const vec3_t *  e, const vec3_t *  p);
+	/*
+		return (p->x - s->x) * (e->y - s->y) - (p->y - s->y) * (e->x - s->x);
+	*/
+	float result = place_of_vec3_z(v_start, v_end, &p1_s);
+	printf("test: %f\n", result);
+	assert(result >= 0); //< 0 == INSIDE
+	result = place_of_vec3_z(v_start, v_end, &p1_e);
+	printf("test: %f\n", result);
+	assert(result >= 0); //< 0 == INSIDE
+
+	result = place_of_vec3_z(v_start, v_end, &p2_s);
+	printf("test: %f\n", result);
+	assert(result < 0); //< 0 == OUTSIDE
+	result = place_of_vec3_z(v_start, v_end, &p2_e);
+	printf("test: %f\n", result);
+	assert(result < 0); //< 0 == OUTSIDE
+
+	result = place_of_vec3_z(v_start, v_end, &p3_s);
+	printf("test: %f\n", result);
+	assert(result >= 0); //< 0 == INSIDE
+	result = place_of_vec3_z(v_start, v_end, &p3_e);
+	printf("test: %f\n", result);
+	assert(result < 0); //< 0 == OUTSIDE
+
+	//bool lines_intersect_pt(vec2_t *intersec, vec2_t* l1p1, vec2_t* l1p2, vec2_t* l2p1, vec2_t* l2p2);
+	vec2_t inter_p;
+	vec2_t v2_start = {v_start->z, v_start->x};
+	vec2_t v2_end = {v_end->z, v_end->x};
+	vec2_t p2_s2 = {p1_s.z, p1_s.x};
+	vec2_t p2_e2 = {p1_e.z, p1_e.x};
+	assert(lines_intersect_pt( &inter_p, &v2_start, &v2_end, &p2_s2, &p2_e2) == false);
+	vec2_print(&inter_p);
+
+	p2_s2 = (vec2_t){p2_s.z, p2_s.x};
+	p2_e2 = (vec2_t){p2_e.z, p2_e.x};
+	assert(lines_intersect_pt( &inter_p, &v2_start, &v2_end, &p2_s2, &p2_e2) == false);
+	vec2_print(&inter_p);
+
+	p2_s2 = (vec2_t){p3_s.z, p3_s.x};
+	p2_e2 = (vec2_t){p3_e.z, p3_e.x};
+	assert(lines_intersect_pt( &inter_p, &v2_start, &v2_end, &p2_s2, &p2_e2) == true);
+	vec2_print(&inter_p);
+
+	//TODO MOVE UP VEC TO this intersection line and recalC
+
+	renderer_free(renderer);
+}
+
 int 
 main() {
 	#ifdef debug
 		printf("Start test renderer\n");
 	#endif	
 	
-	test_renderer_creation();
+	test_clip_line();
+
+	/*test_renderer_creation();
 	
 	renderer_t *renderer = create_test_base_renderer(1);
 	
@@ -187,7 +297,7 @@ main() {
 	
 	test_render_texture_cube_perspective(1);
 	test_render_texture_cube_perspective(4);
-		
+	*/	
 	#ifdef debug
 		printf("End test renderer\n");
 	#endif	
