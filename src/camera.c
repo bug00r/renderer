@@ -16,8 +16,8 @@ void config_camera(camera_t *  camera, const vec3_t *  from, const vec3_t *  to,
 	setviewport(curcam,l,r,t,b,near,far);
 	camera_lookAt_ortho(curcam, from, to);
 	createProjectionOrtho(curcam, l, r, t, b, near, far);
-	//mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
-	mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
+	//fixing invalid wording i stored the projectionto the view matrix and vice versa. also i made invalid direction of multiplication
+	mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
 }
 
 void config_camera_perspective(camera_t *  camera, const vec3_t *  from, const vec3_t *  to, 
@@ -26,15 +26,14 @@ void config_camera_perspective(camera_t *  camera, const vec3_t *  from, const v
 	setviewport(curcam,l,r,t,b,near,far);
 	camera_lookAt_perspective(curcam, from, to);
 	createProjectionPerspective(curcam, l, r, t, b, near, far);
-	//mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
-	mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
+	mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
 }
 
 void 
 camera_lookAt_ortho(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
 	const vec3_t *  eye = from;
 	camera_t *  cam = camera;
-	mat4_t projection;
+	mat4_t view;
 	
 	vec3_sub_dest(&cam->forward, eye, to);
 	vec3_normalize(&cam->forward);
@@ -48,27 +47,27 @@ camera_lookAt_ortho(camera_t *  camera, const vec3_t *  from, const vec3_t *  to
 	vec3_cross_dest(&cam->up, &cam->forward, &cam->left);
 	vec3_normalize(&cam->up);
 	
-	projection._11 = cam->left.x;
-	projection._21 = cam->left.y;
-	projection._31 = cam->left.z;
-	projection._41 = 0.f;//-vec3_vec3mul(right, from);
+	view._11 = cam->left.x;
+	view._21 = cam->left.y;
+	view._31 = cam->left.z;
+	view._41 = 0.f;//-vec3_vec3mul(right, from);
 	
-	projection._12 = cam->up.x;
-	projection._22 = cam->up.y;
-	projection._32 = cam->up.z;
-	projection._42 = 0.f;//-vec3_vec3mul(up, from);//0.f;
+	view._12 = cam->up.x;
+	view._22 = cam->up.y;
+	view._32 = cam->up.z;
+	view._42 = 0.f;//-vec3_vec3mul(up, from);//0.f;
 	
-	projection._13 = cam->forward.x;
-	projection._23 = cam->forward.y;
-	projection._33 = cam->forward.z;
-	projection._43 = 0.f;//vec3_vec3mul(forward, from);//0.f;
+	view._13 = cam->forward.x;
+	view._23 = cam->forward.y;
+	view._33 = cam->forward.z;
+	view._43 = 0.f;//vec3_vec3mul(forward, from);//0.f;
 	
-	projection._14 = -eye->x;
-	projection._24 = -eye->y;
-	projection._34 = -eye->z;
-	projection._44 = 1.f;
+	view._14 = -eye->x;
+	view._24 = -eye->y;
+	view._34 = -eye->z;
+	view._44 = 1.f;
 	
-	mat4_inverse_dest(&cam->projection, &projection);
+	mat4_inverse_dest(&cam->view, &view);
 }
 
 void __calc_clipline(camera_t *  camera) {
@@ -85,7 +84,7 @@ void __calc_clipline(camera_t *  camera) {
 	//test with constant
 	float half_length = 5.f;
 
-	vec3_mul(&forward, cam->n);
+	//vec3_mul(&forward, cam->n);
 
 	vec3_mul_dest(&clip_line->start, &left, -half_length);
 	vec3_add(&clip_line->start, &forward);
@@ -127,7 +126,7 @@ camera_lookAt_perspective(camera_t *  camera, const vec3_t *  from, const vec3_t
 				 0.f	,0.f ,	0.f		,1.f };
 	
 	//inverse: Base matrix
-	mat4_t * dest = &cam->projection;
+	mat4_t * dest = &cam->view;
 	mat3_t t = { m._22, m._23, m._24, m._32, m._33, m._34, m._42, m._43, m._44};
 
 	dest->_11 = ((t._11*t._22*t._33) + (t._12*t._23*t._31) + (t._13*t._21*t._32) -
@@ -215,25 +214,26 @@ camera_lookAt_perspective(camera_t *  camera, const vec3_t *  from, const vec3_t
 void 
 createProjectionOrtho(camera_t *  camera, const float l,const float r,const float t,const float b,const float near,const float far) {
 	camera_t *  cam = camera;
-	cam->view._11 = 2.f/(r-l);
-	cam->view._12 = 0.f;
-	cam->view._13 = 0.f;
-	cam->view._14 = -((r+l)/(r-l));
+	mat4_t *p = &cam->projection;
+	p->_11 = 2.f/(r-l);
+	p->_12 = 0.f;
+	p->_13 = 0.f;
+	p->_14 = -((r+l)/(r-l));
 
-	cam->view._21 = 0.f;
-	cam->view._22 = 2.f/(t-b);
-	cam->view._23 = 0.f;
-	cam->view._24 = -((t+b)/(t-b));
+	p->_21 = 0.f;
+	p->_22 = 2.f/(t-b);
+	p->_23 = 0.f;
+	p->_24 = -((t+b)/(t-b));
 
-	cam->view._31 = 0.f;
-	cam->view._32 = 0.f;
-	cam->view._33 = -2.f/(far-near);
-	cam->view._34 = -((far+near)/(far-near));
+	p->_31 = 0.f;
+	p->_32 = 0.f;
+	p->_33 = -2.f/(far-near);
+	p->_34 = -((far+near)/(far-near));
 
-	cam->view._41 = 0.f;
-	cam->view._42 = 0.f;
-	cam->view._43 = 0.f;
-	cam->view._44 = 1.f;
+	p->_41 = 0.f;
+	p->_42 = 0.f;
+	p->_43 = 0.f;
+	p->_44 = 1.f;
 }
 
 #if 0
@@ -242,26 +242,28 @@ createProjectionOrtho(camera_t *  camera, const float l,const float r,const floa
 void
 createProjectionPerspective(camera_t *  camera, const float l,const float r,const float t,const float b,const float near,const float far) {
 	camera_t *  cam = camera;
+	mat4_t *p = &cam->projection;
+
 	float scale = 1 / tan(90.f * 0.5f * M_PI / 180.f); 
-	cam->view._11 = scale;//(2.f*near)/(r-l);//scale;//
-	cam->view._12 = 0.f;
-	cam->view._13 = (r+l)/(r-l);
-	cam->view._14 = 0.f;
-	   
-	cam->view._21 = 0.f;
-	cam->view._22 = scale;//(2.f*near)/(t-b); //scale;//
-	cam->view._23 = (t+b)/(t-b);
-	cam->view._24 = 0.f;
-	   
-	cam->view._31 = 0.f;
-	cam->view._32 = 0.f;
-	cam->view._33 = -(far+near)/(far-near);
-	cam->view._34 = -(2.f*far*near)/(far-near);
-	  
-	cam->view._41 = 0.f;
-	cam->view._42 = 0.f;
-	cam->view._43 = 1.f;
-	cam->view._44 = 0.f;
+	p->_11 = scale;//(2.f*near)/(r-l);//scale;//
+	p->_12 = 0.f;
+	p->_13 = (r+l)/(r-l);
+	p->_14 = 0.f;
+	
+	p->_21 = 0.f;
+	p->_22 = scale;//(2.f*near)/(t-b); //scale;//
+	p->_23 = (t+b)/(t-b);
+	p->_24 = 0.f;
+	
+	p->_31 = 0.f;
+	p->_32 = 0.f;
+	p->_33 = -(far+near)/(far-near);
+	p->_34 = -(2.f*far*near)/(far-near);
+	
+	p->_41 = 0.f;
+	p->_42 = 0.f;
+	p->_43 = 1.f;
+	p->_44 = 0.f;
 }
 
 void 
@@ -270,7 +272,7 @@ print_camera(const camera_t *  camera) {
 	printf("forw.:\t"); vec3_print(&cam->forward);
 	printf("left:\t"); vec3_print(&cam->left);
 	printf("up:\t"); vec3_print(&cam->up);
-	printf("camera:\t"); mat4_print(&cam->view);
+	printf("view:\t"); mat4_print(&cam->view);
 	printf("projection:\t"); mat4_print(&cam->projection);
 	printf("transformation:\t"); mat4_print(&cam->transformation);
 }

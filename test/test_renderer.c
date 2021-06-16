@@ -76,8 +76,8 @@ static void test_clip_line() {
 	vec3_t *v_start = &renderer->camera.clip_line.start;
 	vec3_t *v_end = &renderer->camera.clip_line.end;
 
-	vec3_t *up_start = &renderer->camera.clip_line.start;
-	vec3_t *up_end = &renderer->camera.clip_line.end;
+	vec3_t *up_start = &renderer->camera.clip_line.up_start;
+	vec3_t *up_end = &renderer->camera.clip_line.up_end;
 
 	vec3_print(v_start);
 	vec3_print(v_end);
@@ -100,24 +100,24 @@ static void test_clip_line() {
 		return (p->x - s->x) * (e->y - s->y) - (p->y - s->y) * (e->x - s->x);
 	*/
 	float result = place_of_vec3_z(v_start, v_end, &p1_s);
-	printf("test: %f\n", result);
+	//printf("test: %f\n", result);
 	assert(result >= 0); //< 0 == INSIDE
 	result = place_of_vec3_z(v_start, v_end, &p1_e);
-	printf("test: %f\n", result);
+	//printf("test: %f\n", result);
 	assert(result >= 0); //< 0 == INSIDE
 
 	result = place_of_vec3_z(v_start, v_end, &p2_s);
-	printf("test: %f\n", result);
+	//printf("test: %f\n", result);
 	assert(result < 0); //< 0 == OUTSIDE
 	result = place_of_vec3_z(v_start, v_end, &p2_e);
-	printf("test: %f\n", result);
+	//printf("test: %f\n", result);
 	assert(result < 0); //< 0 == OUTSIDE
 
 	result = place_of_vec3_z(v_start, v_end, &p3_s);
-	printf("test: %f\n", result);
+	//printf("test: %f\n", result);
 	assert(result >= 0); //< 0 == INSIDE
 	result = place_of_vec3_z(v_start, v_end, &p3_e);
-	printf("test: %f\n", result);
+	//printf("test: %f\n", result);
 	assert(result < 0); //< 0 == OUTSIDE
 
 	//bool lines_intersect_pt(vec2_t *intersec, vec2_t* l1p1, vec2_t* l1p2, vec2_t* l2p1, vec2_t* l2p2);
@@ -127,19 +127,34 @@ static void test_clip_line() {
 	vec2_t p2_s2 = {p1_s.z, p1_s.x};
 	vec2_t p2_e2 = {p1_e.z, p1_e.x};
 	assert(lines_intersect_pt( &inter_p, &v2_start, &v2_end, &p2_s2, &p2_e2) == false);
-	vec2_print(&inter_p);
+	//vec2_print(&inter_p);
 
 	p2_s2 = (vec2_t){p2_s.z, p2_s.x};
 	p2_e2 = (vec2_t){p2_e.z, p2_e.x};
 	assert(lines_intersect_pt( &inter_p, &v2_start, &v2_end, &p2_s2, &p2_e2) == false);
-	vec2_print(&inter_p);
+	//vec2_print(&inter_p);
 
 	p2_s2 = (vec2_t){p3_s.z, p3_s.x};
 	p2_e2 = (vec2_t){p3_e.z, p3_e.x};
 	assert(lines_intersect_pt( &inter_p, &v2_start, &v2_end, &p2_s2, &p2_e2) == true);
+	printf("First Z/X interception:\n");
 	vec2_print(&inter_p);
 
 	//TODO MOVE UP VEC TO this intersection line and recalC
+	vec2_t up_mov_s = { inter_p.y, up_start->y};
+	vec2_t up_mov_e = { inter_p.y, up_end->y};
+
+	float saved_z = inter_p.x;
+
+	p2_s2 = (vec2_t){p3_s.x, p3_s.y};
+	p2_e2 = (vec2_t){p3_e.x, p3_e.y};
+	assert(lines_intersect_pt( &inter_p, &up_mov_s, &up_mov_e, &p2_s2, &p2_e2) == true);
+	vec2_print(&inter_p);
+
+	printf("3D intersection:\n");
+	vec3_t interception = {inter_p.x, inter_p.y, saved_z};
+
+	vec3_print(&interception);
 
 	renderer_free(renderer);
 }

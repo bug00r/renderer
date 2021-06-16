@@ -233,7 +233,7 @@ static bool _world_to_raster(const vec3_t * _v, vec3_t * _ndc, vec3_t * _raster,
 	ndc->z += (v->x * ct->_31) + (v->y * ct->_32) + (v->z * ct->_33);// + ct->_34;
 	*weight += (v->x * ct->_41) + (v->y * ct->_42) + (v->z * ct->_43);// + ct->_44;
 	
-	//if (*weight < 0.f) return true;
+	if (*weight < 0.f) return true;
 	
 	if (*weight != 1.f && *weight != 0.f){
 		*weight = 1.f/(*weight); ndc->x *= *weight; ndc->y *= *weight; ndc->z *= *weight;
@@ -290,14 +290,103 @@ static void render_point(renderer_t * renderer, const shape_t * shape){
 	}
 }
 
-static void render_line(renderer_t * renderer, const shape_t * shape){
+static float place_of_vec3_z(const vec3_t *  s, const vec3_t *  e, const vec3_t *  p) {
+	return (p->z - s->z) * (e->x - s->x) - (p->x - s->x) * (e->z - s->z);
+}
+
+/**
+ *  This function filters or clips line based on camera position. If both line vector lay
+ *  behind the cam there is no need to draw. If both line points in front of the cam, they
+ *  will leaved unhandled. If there is one point in front of the cam and one behind, there
+ *  will be computed the intersection point and the given line will be clipped and the result
+ *  stored in destination vectors. 
+ * 
+ * 	If return value is true, the destination vectors should be handled, otherwise not.
+ */
+static bool __line_filter_or_clip(renderer_t* _renderer, vec3_t* _dest_start, vec3_t* _dest_end,
+								  const vec3_t* _line_start, const vec3_t* _line_end ) {
+	
+	renderer_t* renderer = _renderer;
+
+	vec3_t	*v_start = &renderer->camera.clip_line.start;
+	vec3_t	*v_end = &renderer->camera.clip_line.end;
+
+	printf("horizontal clip line:\n");
+	vec3_print(v_start);
+	vec3_print(v_end);
+
+	const vec3_t	*line_start = _line_start;
+	const vec3_t	*line_end = _line_end;
+
+	printf("to check line:\n");
+	vec3_print(line_start);
+	vec3_print(line_end);
+
+	bool filtered = false;
+	bool start_out = (place_of_vec3_z(v_start, v_end, line_start) < 0);
+	bool end_out = (place_of_vec3_z(v_start, v_end, line_end) < 0);
+
+	filtered = (start_out && end_out);
+
+	printf("start out: %i  end out: %i\n", start_out, end_out);
+
+	if (filtered) return false;
+
+	vec2_t inter_p;
+	vec2_t v2_start = {v_start->z, v_start->x};
+	vec2_t v2_end = {v_end->z, v_end->x};
+
+	vec2_t p2_s2 = {line_start->z, line_start->x};
+	vec2_t p2_e2 = {line_end->z, line_end->x};
+
+	lines_intersect_pt( &inter_p, &v2_start, &v2_end, &p2_s2, &p2_e2);
+
+	printf("First Z/X (x/y) intersection:\n");
+	vec2_print(&inter_p);
+
+	//TODO MOVE UP VEC TO this intersection line and recalC
+	vec3_t *up_start = &renderer->camera.clip_line.up_start;
+	vec3_t *up_end = &renderer->camera.clip_line.up_end;
+	
+	printf("vertical y proofline:\n");
+	vec3_print(up_start);
+	vec3_print(up_end);
+	
+	vec2_t up_mov_s = { inter_p.y, up_start->y};
+	vec2_t up_mov_e = { inter_p.y, up_end->y};
+
+	float saved_z = inter_p.x;
+
+	p2_s2 = (vec2_t){line_start->x, line_start->y};
+	p2_e2 = (vec2_t){line_end->x, line_end->y};
+	lines_intersect_pt( &inter_p, &up_mov_s, &up_mov_e, &p2_s2, &p2_e2);
+	
+	printf("First X/Y intersection:\n");
+	vec2_print(&inter_p);
+	vec2_print(&inter_p);
+
+	//printf("3D intersection:\n");
+	//vec3_t interception = {inter_p.x, inter_p.y, saved_z};
+	vec3_copy_dest(_dest_start, line_start);
+	vec3_copy_dest(_dest_end, line_end);
+
+	vec3_t *to_clip = ( start_out ? _dest_start : _dest_end);
+	vec3_set_values(to_clip, inter_p.x, inter_p.y, saved_z);
+
+	printf("clipped point(the outer):\n");
+	vec3_print(to_clip);
+
+	return true;
+}
+
+static void render_line(renderer_t * _renderer, const shape_t * shape){
 	//VARS
+	renderer_t * renderer = _renderer;
 	const camera_t * cam = &renderer->camera;
 	const mat4_t * ct = &cam->transformation;
 	const vertex_t ** vertices = (const vertex_t **)shape->vertices;
 	const vertex_t * v1 = (const vertex_t *)vertices[0]; 
 	const vertex_t * v2 = (const vertex_t *)vertices[1];
-	const vec3_t * v1v = &v1->vec,* v2v = &v2->vec;
 	const cRGB_t * v1c = &v1->color;
 	const vec2_t * samples = renderer->samples;
 	const vec2_t * cursample;
@@ -314,6 +403,15 @@ static void render_line(renderer_t * renderer, const shape_t * shape){
 		  rz1, rz2;
 	barycentric_t bc;
 	float * zBuffer = renderer->zBuffer;
+
+	//const vec3_t * v1v =  &v1->vec, * v2v =  &v2->vec;
+
+	vec3_t _v1v, _v2v;
+	const vec3_t * v1v = &_v1v, * v2v = &_v2v;
+	if ( !__line_filter_or_clip(renderer, &_v1v, &_v2v, &v1->vec, &v2->vec) ) {
+		printf("FILTERED:\n");
+		return;
+	} 
 	
 	if (_world_to_raster(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct)) return;
 	if (_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct)) return;
