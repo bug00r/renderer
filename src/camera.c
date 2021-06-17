@@ -29,6 +29,8 @@ void config_camera_perspective(camera_t *  camera, const vec3_t *  from, const v
 	createProjectionPerspective(curcam, l, r, t, b, near, far);
 	//mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
 	mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
+	
+	//mat4_copy(&curcam->transformation ,&curcam->projection);
 }
 
 void 
@@ -64,9 +66,9 @@ camera_lookAt_ortho(camera_t *  camera, const vec3_t *  from, const vec3_t *  to
 	projection._33 = cam->forward.z;
 	projection._43 = 0.f;//vec3_vec3mul(forward, from);//0.f;
 	
-	projection._14 = -eye->x;
-	projection._24 = -eye->y;
-	projection._34 = -eye->z;
+	projection._14 = eye->x;
+	projection._24 = eye->y;
+	projection._34 = eye->z;
 	projection._44 = 1.f;
 	
 	mat4_inverse_dest(&cam->projection, &projection);
@@ -263,6 +265,7 @@ createProjectionPerspective(camera_t *  camera, const float l,const float r,cons
 	cam->view._42 = 0.f;
 	cam->view._43 = -1.f;
 	cam->view._44 = 0.f;
+
 }
 
 void 
