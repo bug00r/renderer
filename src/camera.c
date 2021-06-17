@@ -122,9 +122,9 @@ camera_lookAt_perspective(camera_t *  camera, const vec3_t *  from, const vec3_t
 	
 	__calc_clipline(cam);
 
-	mat4_t m = { l->x	,u->x,	-f->x	,eye->x,	
-				 l->y	,u->y,	-f->y	,eye->y,	
-				 l->z	,u->z,	-f->z	,eye->z, 	
+	mat4_t m = { l->x	,u->x,	f->x	,eye->x,	
+				 l->y	,u->y,	f->y	,eye->y,	
+				 l->z	,u->z,	f->z	,eye->z, 	
 				 0.f	,0.f ,	0.f		,1.f };
 	
 	//inverse: Base matrix
@@ -261,7 +261,7 @@ createProjectionPerspective(camera_t *  camera, const float l,const float r,cons
 	  
 	cam->view._41 = 0.f;
 	cam->view._42 = 0.f;
-	cam->view._43 = 1.f;
+	cam->view._43 = -1.f;
 	cam->view._44 = 0.f;
 }
 

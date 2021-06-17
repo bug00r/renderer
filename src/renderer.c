@@ -60,7 +60,7 @@ static bool _compute_and_set_z(const float * rz1, const float * rz2, const float
 	
 	float * old_z = zBuffer + *bi;
 
-	if ( z > *old_z ) { return true; }
+	if ( z < *old_z ) { return true; }
 	
 	*old_z = z;			
 	
@@ -241,7 +241,7 @@ static bool _world_to_raster(const vec3_t * _v, vec3_t * _ndc, vec3_t * _raster,
 	
 	raster->x = (ndc->x + 1.f) * (*imgW_h);
 	raster->y = (1.f-ndc->y) * (*imgH_h);
-	raster->z = -ndc->z;
+	raster->z = ndc->z;
 	*rz3 = 1.f/raster->z;
 	
 	return false;
@@ -411,7 +411,7 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 	if ( !__line_filter_or_clip(renderer, &_v1v, &_v2v, &v1->vec, &v2->vec) ) {
 		printf("FILTERED:\n");
 		return;
-	} 
+	}
 	
 	if (_world_to_raster(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct)) return;
 	if (_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct)) return;
@@ -543,10 +543,10 @@ void renderer_clear_frame(renderer_t * renderer){
 	const int buffersize = renderer->imgWidth * 
 						   renderer->imgHeight * 
 						   renderer->samplestep * renderer->samplestep;
-	memset(renderer->zBuffer, CHAR_MAX, buffersize * sizeof(float));
+	memset(renderer->zBuffer, CHAR_MIN, buffersize * sizeof(float));
 	memset(renderer->frameBuffer, 0, buffersize * sizeof(cRGB_t));
-	renderer->min_z = RENDER_FLT_MAX;
-	renderer->max_z = 0.f;
+	renderer->max_z = RENDER_FLT_MAX;
+	renderer->min_z = 0.f;
 }
 
 renderer_t * 
