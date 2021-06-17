@@ -36,22 +36,6 @@ char * create_string(const char * msg, ...) {
 #include "test_include_cone.c"
 #include "test_include_square_block.c"
 
-/**
- * renderer_t * create_renderer_perspective(int width, int height,
-									vec3_t *from, vec3_t* to, 
-									float zoom, 
-									float left, float right, 
-									float top, float bottom, 
-									float near, float far,
-									cRGB_t *bgcolor,
-									unsigned int samplestep) {
-    renderer_t *renderer = renderer_new(width, height, bgcolor, samplestep);
-	renderer->projection = RP_PERSPECTIVE;
-	config_camera_perspective(&renderer->camera, from, to, zoom * left, zoom * right, zoom * top, zoom * bottom, near, far);
-	return renderer;
-}
-*/
-
 static float place_of_vec3_z(const vec3_t *  s, const vec3_t *  e, const vec3_t *  p) {
 	return (p->z - s->z) * (e->x - s->x) - (p->x - s->x) * (e->z - s->z);
 }

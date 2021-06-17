@@ -14,7 +14,7 @@ void config_camera(camera_t *  camera, const vec3_t *  from, const vec3_t *  to,
                    const float l,const float r,const float t,const float b,const float near,const float far) {
 	camera_t *  curcam = camera;
 	setviewport(curcam,l,r,t,b,near,far);
-	camera_lookAt_ortho(curcam, from, to);
+	camera_lookAt(curcam, from, to);
 	createProjectionOrtho(curcam, l, r, t, b, near, far);
 	
 	//mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
@@ -25,53 +25,12 @@ void config_camera_perspective(camera_t *  camera, const vec3_t *  from, const v
                    const float l,const float r,const float t,const float b,const float near,const float far) {
 	camera_t *  curcam = camera;
 	setviewport(curcam,l,r,t,b,near,far);
-	camera_lookAt_perspective(curcam, from, to);
+	camera_lookAt(curcam, from, to);
 	createProjectionPerspective(curcam, l, r, t, b, near, far);
 	//mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
 	mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
 	
 	//mat4_copy(&curcam->transformation ,&curcam->projection);
-}
-
-void 
-camera_lookAt_ortho(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
-	const vec3_t *  eye = from;
-	camera_t *  cam = camera;
-	mat4_t projection;
-	
-	vec3_sub_dest(&cam->forward, eye, to);
-	vec3_normalize(&cam->forward);
-	
-	vec3_t tmp = { 0.f, 1.f, 0.f};
-	vec3_normalize(&tmp);
-	
-	vec3_cross_dest(&cam->left, &tmp, &cam->forward);
-	vec3_normalize(&cam->left);
-	
-	vec3_cross_dest(&cam->up, &cam->forward, &cam->left);
-	vec3_normalize(&cam->up);
-	
-	projection._11 = cam->left.x;
-	projection._21 = cam->left.y;
-	projection._31 = cam->left.z;
-	projection._41 = 0.f;//-vec3_vec3mul(right, from);
-	
-	projection._12 = cam->up.x;
-	projection._22 = cam->up.y;
-	projection._32 = cam->up.z;
-	projection._42 = 0.f;//-vec3_vec3mul(up, from);//0.f;
-	
-	projection._13 = cam->forward.x;
-	projection._23 = cam->forward.y;
-	projection._33 = cam->forward.z;
-	projection._43 = 0.f;//vec3_vec3mul(forward, from);//0.f;
-	
-	projection._14 = eye->x;
-	projection._24 = eye->y;
-	projection._34 = eye->z;
-	projection._44 = 1.f;
-	
-	mat4_inverse_dest(&cam->projection, &projection);
 }
 
 void __calc_clipline(camera_t *  camera) {
@@ -102,7 +61,7 @@ void __calc_clipline(camera_t *  camera) {
 }
 
 void 
-camera_lookAt_perspective(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
+camera_lookAt(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
 	
 	const vec3_t *  eye = from;
 	camera_t *  cam = camera;
@@ -129,7 +88,7 @@ camera_lookAt_perspective(camera_t *  camera, const vec3_t *  from, const vec3_t
 				 l->z	,u->z,	f->z	,eye->z, 	
 				 0.f	,0.f ,	0.f		,1.f };
 	
-	//inverse: Base matrix
+	//inverse: Base matrix, below complex, could be => mat4_inverse_dest(&cam->projection, &projection);
 	mat4_t * dest = &cam->projection;
 	mat3_t t = { m._22, m._23, m._24, m._32, m._33, m._34, m._42, m._43, m._44};
 

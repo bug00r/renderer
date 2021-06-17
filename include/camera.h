@@ -42,16 +42,7 @@ void config_camera(camera_t *  newcamera, const vec3_t *  from, const vec3_t *  
 void config_camera_perspective(camera_t *  newcamera, const vec3_t *  from, const vec3_t *  to, 
 				   const float l, const float r, const float t, const float b, const float near, const float far);
 
-void config_camera_opengl(camera_t *  newcamera, const vec3_t *  from, const vec3_t *  to, 
-				   const float l, const float r, const float t, const float b, const float near, const float far);
-
-void camera_lookAt_opengl(camera_t *  camera, const vec3_t *  from, const vec3_t *  to);
-void camera_lookAt_ortho(camera_t *  camera, const vec3_t *  from, const vec3_t *  to);
-void camera_lookAt_perspective(camera_t *  camera, const vec3_t *  from, const vec3_t *  to);
-
-void createProjectionPerspectiveOpenGl(camera_t *  camera, const float l, const float r, const float t, const float b, const float near, const float far);
-
-void createProjectionOrtho2(camera_t *  camera, const float r, const float t, const float near, const float far);
+void camera_lookAt(camera_t *  camera, const vec3_t *  from, const vec3_t *  to);
 
 void createProjectionOrtho(camera_t *  camera, const float l, const float r, const float t, const float b, const float near, const float far);
 
