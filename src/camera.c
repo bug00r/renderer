@@ -55,8 +55,8 @@ static void __calc_frustum(camera_t *  camera) {
 	vec3_t tmp2;
 
 	vec3_t neg_forward;
-	//vec3_negate_dest(&neg_forward, &cam->forward);
-	vec3_mul_dest(&tmp, &cam->forward, cam->n);
+	vec3_negate_dest(&neg_forward, &cam->forward);
+	vec3_mul_dest(&tmp, &neg_forward, cam->n);
 	vec3_add_dest(&neg_forward, &cam->from, &tmp);
 
 	//calc near left top
