@@ -307,8 +307,63 @@ static bool __line_filter_or_clip(renderer_t* _renderer, vec3_t* _dest_start, ve
 								  const vec3_t* _line_start, const vec3_t* _line_end ) {
 	
 	renderer_t* renderer = _renderer;
+	plane_t *near = &renderer->camera.frustum.near;
+	vec3_t *normal = &near->normal;
 
-	vec3_t	*v_start = &renderer->camera.clip_line.start;
+	vec3_t	*line_start = (vec3_t*)_line_start;
+	vec3_t	*line_end = (vec3_t*)_line_end;
+
+	bool filtered = false;
+	bool start_out = (mu_point_plane_distance_normal(line_start, &near->lb, normal) < 0);
+	bool end_out = (mu_point_plane_distance_normal(line_end, &near->lb, normal) < 0);
+
+	filtered = (start_out && end_out);
+
+	printf("start out: %i  end out: %i\n", start_out, end_out);
+	printf("line: ");
+	vec3_print(line_start);
+	vec3_print(line_end);
+	print_camera(&renderer->camera);
+
+	if (filtered)  {	
+		return false;
+	} else if ( !start_out && !end_out ) {
+		return true;
+	}
+
+	vec3_copy_dest(_dest_start, line_start);
+	vec3_copy_dest(_dest_end, line_end);
+
+	vec3_t intersect;
+	if (mu_line_plane_intersection_normal(&intersect, line_start, line_end, &near->lb, normal)) {
+		vec3_t *to_clip = ( start_out ? _dest_start : _dest_end);
+		vec3_copy_dest(to_clip, &intersect);
+		printf("line: ");
+		vec3_print(line_start);
+		vec3_print(line_end);
+		printf("line clip: ");
+		vec3_print(to_clip);
+		print_camera(&renderer->camera);
+	}
+
+
+	//bool mu_line_plane_intersection_normal(vec3_t *intersect, vec3_t *_line_p1, vec3_t *_line_p2, vec3_t * _point, vec3_t *_normal) 
+
+	//clipping NEW
+
+		//bool mu_line_plane_intersection(vec3_t *_intersect, vec3_t * _line_p1, vec3_t * _line_p2, vec3_t * _plane_p1, vec3_t * _plane_p2, vec3_t * _plane_p3)
+	/*vec3_t inter_pt;
+	vec3_t line_p1 = {0.5f, 0.5f, 0.5f};
+	vec3_t line_p2 = {0.5f, -0.5f, 0.5f};
+	bool intersects = mu_line_plane_intersection(&inter_pt, &line_p1, &line_p2, &plane_p1, &plane_p2, &plane_p3);
+
+	assert(intersects == true);
+	vec3_t expected_intersection = {0.5f, 0.f, 0.5f};
+	assert(vec3_equals(&inter_pt, &expected_intersection));*/
+
+
+
+	/*vec3_t	*v_start = &renderer->camera.clip_line.start;
 	vec3_t	*v_end = &renderer->camera.clip_line.end;
 
 	printf("horizontal clip line:\n");
@@ -375,6 +430,7 @@ static bool __line_filter_or_clip(renderer_t* _renderer, vec3_t* _dest_start, ve
 
 	printf("clipped point(the outer):\n");
 	vec3_print(to_clip);
+	*/
 
 	return true;
 }
@@ -409,12 +465,11 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 	vec3_t _v1v, _v2v;
 	const vec3_t * v1v = &_v1v, * v2v = &_v2v;
 	if ( !__line_filter_or_clip(renderer, &_v1v, &_v2v, &v1->vec, &v2->vec) ) {
-		printf("FILTERED:\n");
 		return;
 	}
 	
-	if (_world_to_raster(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct)) return;
-	if (_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct)) return;
+	_world_to_raster(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct);
+	_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct);
 	
 	_compute_min_max_w_h_line(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH, &pRaster1, &pRaster2);
 	

@@ -33,31 +33,128 @@ void config_camera_perspective(camera_t *  camera, const vec3_t *  from, const v
 	//mat4_copy(&curcam->transformation ,&curcam->projection);
 }
 
-void __calc_clipline(camera_t *  camera) {
+static void __calc_normal(plane_t *plane) {
+	plane_t *p = plane;
+	vec3_t tmp, tmp2;
+	vec3_sub_dest(&tmp, &p->rb, &p->lb);
+	vec3_sub_dest(&tmp2, &p->lt, &p->lb);
+
+	vec3_cross_dest(&p->normal, &tmp, &tmp2);
+}
+
+static void __calc_frustum(camera_t *  camera) {
 	camera_t *cam = camera;
-	clip_t *clip_line = &cam->clip_line;
-	//corrected invalid left (readon in short: calculating row and column major mix :( ))
-	vec3_t left;
-	vec3_negate_dest(&left, &cam->left);
+	frustum_t *frustum = &cam->frustum;
+	plane_t *near = &frustum->near;
+	plane_t *far = &frustum->far;
+	plane_t *left = &frustum->left;
+	plane_t *right = &frustum->right;
+	plane_t *top = &frustum->top;
+	plane_t *bottom = &frustum->bottom;
+	vec3_t tmp;
+	vec3_t tmp2;
 
-	vec3_t forward;
-	vec3_negate_dest(&forward, &cam->forward);
-	// EOF correction
+	vec3_t neg_forward;
+	//vec3_negate_dest(&neg_forward, &cam->forward);
+	vec3_mul_dest(&tmp, &cam->forward, cam->n);
+	vec3_add_dest(&neg_forward, &cam->from, &tmp);
 
-	//test with constant
-	float half_length = 5.f;
+	//calc near left top
+	vec3_mul_dest(&tmp2, &cam->up, cam->t);
+	vec3_add_dest(&tmp, &neg_forward, &tmp2);
 
-	//vec3_mul(&forward, cam->n);
+	vec3_mul_dest(&tmp2, &cam->left, -cam->l);
+	vec3_add(&tmp, &tmp2);
 
-	vec3_mul_dest(&clip_line->start, &left, -half_length);
-	vec3_add(&clip_line->start, &forward);
+	vec3_copy_dest(&near->lt, &tmp);
+	
+	//calc far left top
+	vec3_mul(&tmp, cam->f);
+	vec3_copy_dest(&far->lt, &tmp);
 
-	vec3_mul_dest(&clip_line->end, &left, half_length);
-	vec3_add(&clip_line->end, &forward);
+	//calc near left bottom
+	vec3_mul_dest(&tmp2, &cam->up, cam->b);
+	vec3_add_dest(&tmp, &neg_forward, &tmp2);
 
-	vec3_mul_dest(&clip_line->up_start, &cam->up, -half_length);
+	vec3_mul_dest(&tmp2, &cam->left, -cam->l);
+	vec3_add(&tmp, &tmp2);
 
-	vec3_mul_dest(&clip_line->up_end, &cam->up, half_length);
+	vec3_copy_dest(&near->lb, &tmp);
+
+	//calc far left bottom
+	vec3_mul(&tmp, cam->f);
+	vec3_copy_dest(&far->lb, &tmp);
+
+	//calc near right top
+	vec3_mul_dest(&tmp2, &cam->up, cam->t);
+	vec3_add_dest(&tmp, &neg_forward, &tmp2);
+
+	vec3_mul_dest(&tmp2, &cam->left, -cam->r);
+	vec3_add(&tmp, &tmp2);
+
+	vec3_copy_dest(&near->rt, &tmp);
+
+	//calc far right top
+	vec3_mul(&tmp, cam->f);
+	vec3_copy_dest(&far->rt, &tmp);
+
+	//calc near right bottom
+	vec3_mul_dest(&tmp2, &cam->up, cam->b);
+	vec3_add_dest(&tmp, &neg_forward, &tmp2);
+
+	vec3_mul_dest(&tmp2, &cam->left, -cam->r);
+	vec3_add(&tmp, &tmp2);
+
+	vec3_copy_dest(&near->rb, &tmp);
+
+	//calc far right bottom
+	vec3_mul(&tmp, cam->f);
+	vec3_copy_dest(&far->rb, &tmp);
+
+	//rearrange far plan as look from behind for easier normal calculation
+	vec3_copy_dest(&left->lb, &far->lb);
+	vec3_copy_dest(&left->lt, &far->lt);
+	vec3_copy_dest(&left->rb, &near->lb);
+	vec3_copy_dest(&left->rt, &near->lt);
+	//set left plane
+	vec3_copy_dest(&left->lb, &far->lb);
+	vec3_copy_dest(&left->lt, &far->lt);
+	vec3_copy_dest(&left->rb, &near->lb);
+	vec3_copy_dest(&left->rt, &near->lt);
+
+	//set right plane
+	vec3_copy_dest(&right->lb, &near->rb);
+	vec3_copy_dest(&right->lt, &near->rt);
+	vec3_copy_dest(&right->rb, &far->rb);
+	vec3_copy_dest(&right->rt, &far->rt);
+
+	//set top plane
+	vec3_copy_dest(&top->lb, &near->lt);
+	vec3_copy_dest(&top->lt, &far->lt);
+	vec3_copy_dest(&top->rb, &near->rt);
+	vec3_copy_dest(&top->rt, &far->rt);
+
+	//set top plane
+	vec3_copy_dest(&bottom->lb, &far->lb);
+	vec3_copy_dest(&bottom->lt, &near->lb);
+	vec3_copy_dest(&bottom->rb, &far->rb);
+	vec3_copy_dest(&bottom->rt, &near->rb);
+
+	//rearrange far plan as look from behind for easier normal calculation
+	vec3_copy_dest(&far->lb, &right->rb);
+	vec3_copy_dest(&far->lt, &right->rt);
+	vec3_copy_dest(&far->rb, &left->lb);
+	vec3_copy_dest(&far->rt, &left->lt);
+
+	//normals are going to center of frustum
+	//near
+	__calc_normal(near);
+	__calc_normal(far);
+	__calc_normal(left);
+	__calc_normal(right);
+	__calc_normal(top);
+	__calc_normal(bottom);
+	
 }
 
 void 
@@ -68,6 +165,9 @@ camera_lookAt(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
 	vec3_t * f = &cam->forward;
 	vec3_t * l = &cam->left;
 	vec3_t * u = &cam->up;
+
+	vec3_copy_dest(&cam->from, from);
+	vec3_copy_dest(&cam->to, to);
 
 	vec3_sub_dest(f, eye, to);
 	vec3_normalize(f);
@@ -81,7 +181,7 @@ camera_lookAt(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
 	vec3_cross_dest(u, f, l);
 	vec3_normalize(u);
 	
-	__calc_clipline(cam);
+	__calc_frustum(cam);
 
 	mat4_t m = { l->x	,u->x,	f->x	,eye->x,	
 				 l->y	,u->y,	f->y	,eye->y,	
@@ -227,12 +327,38 @@ createProjectionPerspective(camera_t *  camera, const float l,const float r,cons
 
 }
 
+static void print_plane(const plane_t *plane) {
+	const plane_t *p = plane;
+	printf("lb: ");vec3_print(&p->lb);
+	printf("rb: ");vec3_print(&p->rb);
+	printf("lt: ");vec3_print(&p->lt);
+	printf("rt: ");vec3_print(&p->rt);
+	printf("normal: ");vec3_print(&p->normal);
+}
+
+static void print_frustum(const frustum_t *frustum) {
+	const frustum_t *fu = frustum;
+	printf("near plane:\n");
+	print_plane(&fu->near);
+	printf("far plane:\n");
+	print_plane(&fu->far);
+	printf("left plane:\n");
+	print_plane(&fu->left);
+	printf("right plane:\n");
+	print_plane(&fu->right);
+	printf("top plane:\n");
+	print_plane(&fu->top);
+	printf("bottom plane:\n");
+	print_plane(&fu->bottom);
+}
+
 void 
 print_camera(const camera_t *  camera) {
 	const camera_t *  cam = camera;
 	printf("forw.:\t"); vec3_print(&cam->forward);
 	printf("left:\t"); vec3_print(&cam->left);
 	printf("up:\t"); vec3_print(&cam->up);
+	print_frustum(&cam->frustum);
 	printf("camera:\t"); mat4_print(&cam->view);
 	printf("projection:\t"); mat4_print(&cam->projection);
 	printf("transformation:\t"); mat4_print(&cam->transformation);

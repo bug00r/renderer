@@ -18,11 +18,21 @@
 #endif
 
 typedef struct {
-	vec3_t start;
-	vec3_t end;
-	vec3_t up_start;
-	vec3_t up_end;
-} clip_t;
+	vec3_t lb;
+	vec3_t rb;
+	vec3_t lt;
+	vec3_t rt;
+	vec3_t normal;
+} plane_t;
+
+typedef struct {
+	plane_t left;
+	plane_t right;
+	plane_t top;
+	plane_t bottom;
+	plane_t near;
+	plane_t far;
+} frustum_t;
 
 typedef struct {
 	mat4_t view;
@@ -31,7 +41,9 @@ typedef struct {
 	vec3_t forward;
 	vec3_t left;
 	vec3_t up;
-	clip_t clip_line;
+	vec3_t from;
+	vec3_t to;
+	frustum_t frustum;
 	float l,r,t,b,n,f;
 } camera_t;
 

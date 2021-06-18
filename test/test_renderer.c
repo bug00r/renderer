@@ -40,7 +40,7 @@ static float place_of_vec3_z(const vec3_t *  s, const vec3_t *  e, const vec3_t 
 	return (p->z - s->z) * (e->x - s->x) - (p->x - s->x) * (e->z - s->z);
 }
 
-static void test_clip_line() {
+/*static void test_clip_line() {
 	int width		= 512;
 	int height		= 512;
 	vec3_t from 	= { 0.f, 0.f, 0.f };
@@ -80,9 +80,9 @@ static void test_clip_line() {
 	vec3_t p3_e = {.8f, .2f, .3f};
 
 	//both in front float place_of_vec3(const vec3_t *  s, const vec3_t *  e, const vec3_t *  p);
-	/*
-		return (p->x - s->x) * (e->y - s->y) - (p->y - s->y) * (e->x - s->x);
-	*/
+	
+	//	return (p->x - s->x) * (e->y - s->y) - (p->y - s->y) * (e->x - s->x);
+	
 	float result = place_of_vec3_z(v_start, v_end, &p1_s);
 	//printf("test: %f\n", result);
 	assert(result >= 0); //< 0 == INSIDE
@@ -141,6 +141,29 @@ static void test_clip_line() {
 	vec3_print(&interception);
 
 	renderer_free(renderer);
+}*/
+
+static void test_frustum() {
+
+	int width		= 512;
+	int height		= 512;
+	vec3_t from 	= { 0.f, 0.f, 0.f };
+	vec3_t to 		= { 0.f, 0.f, 1.f };
+	cRGB_t bgcolor	= { 0.f, 0.f, 0.f };
+	unsigned int samplestep = 1;
+	float zoom 		= 1.f;
+	float view 		= 4.f;
+	float left 		= -view;
+	float right 	= view;
+	float bottom 	= -view;
+	float top 		= view;
+	float near		= 1.f;
+	float far		= 6.f;
+	renderer_t * renderer = create_renderer_perspective( width, height, &from, &to, zoom, left, right, top, bottom, near, far, &bgcolor, samplestep);
+
+	print_camera(&renderer->camera);
+
+	renderer_free(renderer);
 }
 
 int 
@@ -149,7 +172,7 @@ main() {
 		printf("Start test renderer\n");
 	#endif	
 	
-	test_clip_line();
+	test_frustum();
 
 	/*test_renderer_creation();
 	
