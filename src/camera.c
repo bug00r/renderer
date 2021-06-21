@@ -40,6 +40,7 @@ static void __calc_normal(plane_t *plane) {
 	vec3_sub_dest(&tmp2, &p->lt, &p->lb);
 
 	vec3_cross_dest(&p->normal, &tmp, &tmp2);
+	//vec3_normalize(&p->normal);
 }
 
 static void __calc_frustum(camera_t *  camera) {
@@ -69,7 +70,9 @@ static void __calc_frustum(camera_t *  camera) {
 	vec3_copy_dest(&near->lt, &tmp);
 	
 	//calc far left top
+	vec3_sub_dest(&tmp, &near->lt, &cam->from);
 	vec3_mul(&tmp, cam->f);
+	tmp.z = -cam->f;
 	vec3_copy_dest(&far->lt, &tmp);
 
 	//calc near left bottom
@@ -82,7 +85,9 @@ static void __calc_frustum(camera_t *  camera) {
 	vec3_copy_dest(&near->lb, &tmp);
 
 	//calc far left bottom
+	vec3_sub_dest(&tmp, &near->lb, &cam->from);
 	vec3_mul(&tmp, cam->f);
+	tmp.z = -cam->f;
 	vec3_copy_dest(&far->lb, &tmp);
 
 	//calc near right top
@@ -95,7 +100,9 @@ static void __calc_frustum(camera_t *  camera) {
 	vec3_copy_dest(&near->rt, &tmp);
 
 	//calc far right top
+	vec3_sub_dest(&tmp, &near->rt, &cam->from);
 	vec3_mul(&tmp, cam->f);
+	tmp.z = -cam->f;
 	vec3_copy_dest(&far->rt, &tmp);
 
 	//calc near right bottom
@@ -108,7 +115,9 @@ static void __calc_frustum(camera_t *  camera) {
 	vec3_copy_dest(&near->rb, &tmp);
 
 	//calc far right bottom
+	vec3_sub_dest(&tmp, &near->rb, &cam->from);
 	vec3_mul(&tmp, cam->f);
+	tmp.z = -cam->f;
 	vec3_copy_dest(&far->rb, &tmp);
 
 	//rearrange far plan as look from behind for easier normal calculation
@@ -355,6 +364,8 @@ static void print_frustum(const frustum_t *frustum) {
 void 
 print_camera(const camera_t *  camera) {
 	const camera_t *  cam = camera;
+	printf("from.:\t"); vec3_print(&cam->from);
+	printf("to:\t"); vec3_print(&cam->to);
 	printf("forw.:\t"); vec3_print(&cam->forward);
 	printf("left:\t"); vec3_print(&cam->left);
 	printf("up:\t"); vec3_print(&cam->up);

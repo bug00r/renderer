@@ -147,8 +147,8 @@ static void test_frustum() {
 
 	int width		= 512;
 	int height		= 512;
-	vec3_t from 	= { 0.f, 0.f, 0.f };
-	vec3_t to 		= { 0.f, 0.f, 1.f };
+	vec3_t from 	= { 0.f, 0.f, 1.f };
+	vec3_t to 		= { 0.f, 0.f, 0.f };
 	cRGB_t bgcolor	= { 0.f, 0.f, 0.f };
 	unsigned int samplestep = 1;
 	float zoom 		= 1.f;
@@ -157,7 +157,7 @@ static void test_frustum() {
 	float right 	= view;
 	float bottom 	= -view;
 	float top 		= view;
-	float near		= 1.f;
+	float near		= .3f;
 	float far		= 6.f;
 	renderer_t * renderer = create_renderer_perspective( width, height, &from, &to, zoom, left, right, top, bottom, near, far, &bgcolor, samplestep);
 
