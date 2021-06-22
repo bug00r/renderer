@@ -68,10 +68,6 @@ static bool _compute_and_set_z_point(const float * rz1, const unsigned int * bi,
 	
 	*old_z = *rz1;	
 	
-	//only for z buffer print 
-	//renderer->min_z = fminf(renderer->min_z, *rz1);
-	//renderer->max_z = fmaxf(renderer->max_z, *rz1);
-	
 	return false;
 }
 
@@ -114,45 +110,55 @@ static bool _compute_sample_bc_and_check_line(vec3_t * _pixelSample, const vec2_
 	barycentric_t * bc = _bc;
 	update_sample(pixelSample, _cursample, curW, curH);
 
-	//bc->inside = false;
-	//very old bc->bc0 = (pixelSample->x - pRaster1->x ) / (pRaster2->x - pRaster1->x);
-	//bc->bc1 = (pixelSample->y - pRaster1->y ) / (pRaster2->y - pRaster1->y);
-	bc->bc1 = (pixelSample->x - pRaster1->x ) * (pRaster2->y - pRaster1->y) - (pixelSample->y - pRaster1->y) * (pRaster2->x - pRaster1->x);
-	float edge = bc->bc1;
+	bc->bc0 = (pixelSample->x - pRaster1->x ) * (pRaster2->y - pRaster1->y) - (pixelSample->y - pRaster1->y) * (pRaster2->x - pRaster1->x);
 
-	//float edge = place_of_vec3(pRaster1, pRaster2, pixelSample);
-	
+	if (bc->bc0 < 0) {
+		bc->bc0 = (pixelSample->y - pRaster1->y ) * (pRaster2->x - pRaster1->x) - (pixelSample->x - pRaster1->x) * (pRaster2->y - pRaster1->y);
+	}
+
+	float edge = bc->bc0;
+
 	vec3_t limitvec;
 	vec3_sub_dest(&limitvec, pRaster2, pRaster1);
 	float limit = vec3_length(&limitvec);// * 0.5f;
-	if ( ( edge <= limit && edge >= -limit ) ) {		 
-		return false;
-	} else {
-		bc->bc1 = (pixelSample->y - pRaster1->y) * (pRaster2->x - pRaster1->x) - (pixelSample->x - pRaster1->x ) * (pRaster2->y - pRaster1->y);
-		float edge = bc->bc1;
-		if ( ( edge <= limit && edge >= -limit ) ) {		 
-			return false;
-		} 
-	}
+	if ( ( edge <= limit && edge >= -limit ) ) {
 
+		vec2_t tmp;
+		vec2_sub_dest(&tmp, (vec2_t*)pRaster2, (vec2_t*)pRaster1);
+		float len = vec2_length(&tmp);
+		vec2_sub_dest(&tmp, (vec2_t*)pixelSample, (vec2_t*)pRaster1);
+		float len2 = vec2_length(&tmp);
+		/*(1)*/
+		bc->bc0 = len2 / len;
+		bc->bc1 = (len-len2) / len;
+	
+
+		/*(2)
+		bc->bc0 = len;
+		bc->bc1 = len2;
+		*/
+		return false;
+	} 
 	return true;								 
 }
 
 
 static bool _compute_and_set_z_line(const float * rz1, const float * rz2, const barycentric_t *bc, 
 								    const unsigned int * bi, float * zBuffer) {
+	/*(1)*/
 	float z =  *rz1 * bc->bc1; 
-	z += *rz2 * bc->bc1; 
-
+	z += *rz2 * bc->bc0; 
+	
+	/*(2)
+	float _rz1a = bc->bc1 / bc->bc0;
+	float _rz2a = (bc->bc0 - bc->bc1) / bc->bc0;
+	float z = interpolate_lin(bc->bc1, 0.f ,*rz1 * _rz2a, bc->bc0, *rz2 * _rz1a);
+	*/
 	float * old_z = zBuffer + *bi;
 
-	if ( z > *old_z ) { return true; }	
-	
+	if ( z < *old_z ) { return true; }	
+
 	*old_z = z;
-	
-	//only for z buffer print 
-	//renderer->min_z = fminf(renderer->min_z, z);
-	//renderer->max_z = fmaxf(renderer->max_z, z);
 	
 	return false;
 }
@@ -283,6 +289,7 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 	barycentric_t bc;
 	float * zBuffer = renderer->zBuffer;
 
+
 	//const vec3_t * v1v =  &v1->vec, * v2v =  &v2->vec;
 
 	vec3_t _v1v, _v2v;
@@ -294,16 +301,6 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 	_world_to_raster_line(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct);
 	_world_to_raster_line(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct);
 
-	bc.area = 1.f/((pRaster2.y - pRaster1.y) - (pRaster2.x - pRaster1.x));
-
-	vec3_t *rStart = &pRaster1;
-	vec3_t *rEnd = &pRaster2;
-
-	if (pRaster2.x < pRaster1.x ) {
-		vec3_t *rStart = &pRaster2;
-		vec3_t *rEnd = &pRaster1;
-	}
-
 	_compute_min_max_w_h_line(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH, &pRaster1, &pRaster2);
 	
 	for(; curH < maxy; ++curH) {
@@ -314,7 +311,7 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 			for (unsigned int sample = used_samples; sample--;) {
 
 				if ( _compute_sample_bc_and_check_line(&pixelSample, &cursample,&curW, &curH, &bc,
-										 rStart, rEnd)) { continue; }
+										 &pRaster1, &pRaster2)) { continue; }
 				
 				unsigned int bi = curWused_samples + sample;
 				
@@ -365,10 +362,13 @@ static bool _compute_and_set_z(const float * rz1, const float * rz2, const float
 	z += (*rz2 * bc->bc1);
 	z += (*rz3 * bc->bc2); 
 	
-	float * old_z = zBuffer + *bi;
+	float *old_z = zBuffer + *bi;
+
+	//printf(" rz1: %f , rz2: %f, rz3: %f, bc->bc0: %f, bc->bc1: %f , bc->bc2: %f ,bc->area: %f ,old_z: %f new z: %f\n",
+	//						*rz1, *rz2, *rz3, bc->bc0, bc->bc1, bc->bc2, bc->area,*old_z, z);
 
 	if ( z < *old_z ) { return true; }
-	
+
 	*old_z = z;			
 	
 	//only for z buffer print 
@@ -506,7 +506,14 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 	_compute_min_max_w_h(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH,
 						 &pRaster1, &pRaster2, &pRaster3);
 	
-	
+	/*int part = 30;
+	int low = 255 - part;
+	int up = 255 + part;
+
+	maxy = up;
+	minx = low;
+	curH = low;
+	*/
 	//EO BOUNDING BOX
 	//old vERSION JUST WORKING FINE. see below improoved version
 	for(; curH < maxy; ++curH) {
@@ -521,13 +528,16 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 				
 				unsigned int bi = curWused_samples + sample;
 				
-				if ( _compute_and_set_z(&rz1, &rz2, &rz3,&bc, &bi, zBuffer) )  { continue; }
-				
-				_compute_px_color(&curCol1, &bc, &weight1, &weight2, &weight3,
-								  renderer->texture, &imgW, v1c, v2c, v3c, v1t, v2t, v3t, &texId);
+				//if ( (curW >= low && curW < up) && (curH >= low && curH < up) ) {
+				//	printf("----- CUBE w/h: %i/%i ", curW, curH);
+					if ( _compute_and_set_z(&rz1, &rz2, &rz3,&bc, &bi, zBuffer) )  { continue; }
+					
+					_compute_px_color(&curCol1, &bc, &weight1, &weight2, &weight3,
+									renderer->texture, &imgW, v1c, v2c, v3c, v1t, v2t, v3t, &texId);
 
-				_set_color_to_fb_(frameBuffer,&bi ,&sample_factor,&curCol1);
-				//EO COLOR AND TEX
+					_set_color_to_fb_(frameBuffer,&bi ,&sample_factor,&curCol1);
+					//EO COLOR AND TEX
+				//}
 			}
 		}
 	}
