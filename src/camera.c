@@ -17,8 +17,8 @@ void config_camera(camera_t *  camera, const vec3_t *  from, const vec3_t *  to,
 	camera_lookAt(curcam, from, to);
 	createProjectionOrtho(curcam, l, r, t, b, near, far);
 	
-	//mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
-	mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
+	mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
+	//mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
 }
 
 void config_camera_perspective(camera_t *  camera, const vec3_t *  from, const vec3_t *  to, 
@@ -27,8 +27,8 @@ void config_camera_perspective(camera_t *  camera, const vec3_t *  from, const v
 	setviewport(curcam,l,r,t,b,near,far);
 	camera_lookAt(curcam, from, to);
 	createProjectionPerspective(curcam, l, r, t, b, near, far);
-	//mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
-	mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
+	mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
+	//mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
 	
 	//mat4_copy(&curcam->transformation ,&curcam->projection);
 }

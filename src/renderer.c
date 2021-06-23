@@ -120,7 +120,7 @@ static bool _compute_sample_bc_and_check_line(vec3_t * _pixelSample, const vec2_
 
 	vec3_t limitvec;
 	vec3_sub_dest(&limitvec, pRaster2, pRaster1);
-	float limit = vec3_length(&limitvec);// * 0.5f;
+	float limit = vec3_length(&limitvec) * 0.6f;
 	if ( ( edge <= limit && edge >= -limit ) ) {
 
 		vec2_t tmp;
