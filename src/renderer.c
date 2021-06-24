@@ -2,6 +2,23 @@
 #include <stdio.h>
 #include "renderer.h"
 
+
+	/*typedef struct {
+	vec3_t ndc;
+	vec3_t raster;
+} vertex_render_info_t;
+
+typedef struct {
+	vec3_t vec;
+	cRGB_t color;
+	vec2_t texCoord;
+	vertex_render_info_t info;
+} vertex_t;*/
+static void _write_vertex_info( vertex_t *vertex, vec3_t *raster, vec3_t *ndc ) {
+	vec3_copy_dest(&vertex->info.raster, raster);
+	vec3_copy_dest(&vertex->info.ndc, ndc);
+}
+
 static void _set_color_to_fb_(cRGB_t * frameBuffer,
 							  const unsigned int * bi , 
 							  const float * sample_factor,
@@ -64,7 +81,7 @@ static bool _compute_and_set_z_point(const float * rz1, const unsigned int * bi,
 		
 	float * old_z = zBuffer + *bi;
              
-	if ( *rz1 > *old_z ) { return true; }
+	if ( *rz1 < *old_z ) { return true; }
 	
 	*old_z = *rz1;	
 	
@@ -112,15 +129,16 @@ static bool _compute_sample_bc_and_check_line(vec3_t * _pixelSample, const vec2_
 
 	bc->bc0 = (pixelSample->x - pRaster1->x ) * (pRaster2->y - pRaster1->y) - (pixelSample->y - pRaster1->y) * (pRaster2->x - pRaster1->x);
 
-	if (bc->bc0 < 0) {
-		bc->bc0 = (pixelSample->y - pRaster1->y ) * (pRaster2->x - pRaster1->x) - (pixelSample->x - pRaster1->x) * (pRaster2->y - pRaster1->y);
-	}
+	/*if (bc->bc0 < 0) {
+		bc->bc0 = (pixelSample->x - pRaster2->x ) * (pRaster1->y - pRaster2->y) - (pixelSample->y - pRaster2->y) * (pRaster1->x - pRaster2->x);
+	}*/
 
 	float edge = bc->bc0;
 
 	vec3_t limitvec;
 	vec3_sub_dest(&limitvec, pRaster2, pRaster1);
-	float limit = vec3_length(&limitvec) * 0.6f;
+	float limit = vec3_length(&limitvec);
+	limit *= 0.5f;
 	if ( ( edge <= limit && edge >= -limit ) ) {
 
 		vec2_t tmp;
@@ -131,8 +149,9 @@ static bool _compute_sample_bc_and_check_line(vec3_t * _pixelSample, const vec2_
 		/*(1)*/
 		bc->bc0 = len2 / len;
 		bc->bc1 = (len-len2) / len;
-	
+		
 
+	
 		/*(2)
 		bc->bc0 = len;
 		bc->bc1 = len2;
@@ -146,9 +165,12 @@ static bool _compute_sample_bc_and_check_line(vec3_t * _pixelSample, const vec2_
 static bool _compute_and_set_z_line(const float * rz1, const float * rz2, const barycentric_t *bc, 
 								    const unsigned int * bi, float * zBuffer) {
 	/*(1)*/
-	float z =  *rz1 * bc->bc1; 
-	z += *rz2 * bc->bc0; 
-	
+	float z = *rz1;
+	if ( *rz1 != *rz2 ) {
+		z =  *rz1 * bc->bc1; 
+		z += *rz2 * bc->bc0; 
+	}
+
 	/*(2)
 	float _rz1a = bc->bc1 / bc->bc0;
 	float _rz2a = (bc->bc0 - bc->bc1) / bc->bc0;
@@ -207,7 +229,7 @@ static bool _world_to_raster_line(const vec3_t * _v, vec3_t * _ndc, vec3_t * _ra
 	raster->y = (1.f-ndc->y) * (*imgH_h);
 	raster->z = ndc->z;
 	*rz3 = 1.f/raster->z;
-	
+
 	return false;
 }
 
@@ -298,8 +320,11 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 		return;
 	}
 	
-	_world_to_raster_line(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct);
+	_world_to_raster_line(v1v, &pNDC1,  &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct);
 	_world_to_raster_line(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct);
+
+	_write_vertex_info((vertex_t *)v1,  &pRaster1, &pNDC1 );
+	_write_vertex_info((vertex_t *)v2,  &pRaster2, &pNDC2 );
 
 	_compute_min_max_w_h_line(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH, &pRaster1, &pRaster2);
 	
@@ -444,6 +469,8 @@ static void render_point(renderer_t * renderer, const shape_t * shape){
 	//EO VARS
 	if (_world_to_raster(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct)) return;
 
+	_write_vertex_info((vertex_t *)v1,  &pRaster1, &pNDC1 );
+
 	maxx = 1.f; maxy = 1.f; minx = 0.f; miny = 0.f;
 	curH = miny; curW = minx;
 	//EO BOUNDING BOX
@@ -500,6 +527,10 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 	if (_world_to_raster(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct)) return; 
 	if (_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct)) return; 
 	if (_world_to_raster(v3v, &pNDC3, &pRaster3, &weight3, &imgW_h, &imgH_h, &rz3, ct)) return; 
+
+	_write_vertex_info((vertex_t *)v1,  &pRaster1, &pNDC1 );
+	_write_vertex_info((vertex_t *)v2,  &pRaster2, &pNDC2 );
+	_write_vertex_info((vertex_t *)v3,  &pRaster3, &pNDC3 );
 
 	bc.area = 1.f/((pRaster3.x - pRaster1.x) * (pRaster2.y - pRaster1.y) - (pRaster3.y - pRaster1.y) * (pRaster2.x - pRaster1.x));
 
