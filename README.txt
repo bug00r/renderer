@@ -1,3 +1,19 @@
+TODO:
+	- create diagramm API
+		- create axis a scene
+		- create label vector as scene for easier extraction
+	- simple polygon triangulation, based on self made algorithm
+		- testing if this could work with simple font polygons
+	- adding font rendering:
+		- build in basic selfmade font
+		- loading true type fonts (it would be nice not using freetype lib)
+
+ISSUES:
+
+- background color rendering is broken.
+
+
+
 Rendering Strategy:
 
 1. This API uses COLUMN MAJOR Matrix:
