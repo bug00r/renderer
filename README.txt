@@ -1,4 +1,10 @@
 TODO:
+	- performance improvement
+		- instead of min max calculation use scanline algorithm.
+			- on lines only took intersection point +- 1 with min max of raster plate
+				- exclide n*m - (ca.)sqrt(n*n + m*m) - O(intersection func)
+			- on triangles calc two intersection point and sort them begin on minx - 1 up to maxx + 1
+				- exclude half of pixel*vpixel - O(intersection func)
 	- create diagramm API
 		- create axis a scene
 		- create label vector as scene for easier extraction
