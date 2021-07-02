@@ -7,6 +7,7 @@ TODO:
 			- 3D we are using bresham to identify pixel for processing and 
 			  then going through regular rendering
 		- instead of min max calculation use scanline algorithm.
+			- should be optimized in vertical or horizontal scanning, based on smallest amount of delta x and delta  y 
 			- on lines only took intersection point +- 1 with min max of raster plate
 				- exclide n*m - (ca.)sqrt(n*n + m*m) - O(intersection func)
 			- on triangles calc two intersection point and sort them begin on minx - 1 up to maxx + 1
