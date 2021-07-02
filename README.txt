@@ -1,5 +1,11 @@
 TODO:
 	- performance improvement
+		- based on the ideas below we could add Rendering Parameter to the Shape object for different processing
+		- the scanline algorithm without depth buffer could be used to realize HUD or UI Interfaces
+	    - For 2D / 3D Wireframe there could be used the Bresham algorithm
+			- 2D we are ignoring depth buffer only examining rasterpixel
+			- 3D we are using bresham to identify pixel for processing and 
+			  then going through regular rendering
 		- instead of min max calculation use scanline algorithm.
 			- on lines only took intersection point +- 1 with min max of raster plate
 				- exclide n*m - (ca.)sqrt(n*n + m*m) - O(intersection func)
