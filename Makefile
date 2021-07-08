@@ -38,11 +38,18 @@ ifeq ($(OUTPUT),1)
 	export outimg= -Doutput=1
 endif
 
-CFLAGS=-std=c11 -Wpedantic -pedantic-errors -Wall -Wextra -O1 $(debug)
+BIT_SUFFIX=
+
+ifeq ($(M32),1)
+	CFLAGS+=-m32
+	BIT_SUFFIX+=32
+endif
+
+CFLAGS+=-std=c11 -Wpedantic -pedantic-errors -Wall -Wextra $(debug)
 #-ggdb
 #-pg for profiling 
 
-LIB?=-L/c/dev/lib
+LIB?=-L/c/dev/lib$(BIT_SUFFIX)
 INCLUDE?= -I/c/dev/include -I./include
 
 LIBNAME=librenderer.a
@@ -64,12 +71,6 @@ ifeq ($(isdebug),1)
 	TESTLIBDIR += -L./../collections/linked_list/$(BUILDDIR)
 	TESTLIB += -llinked_list
 endif
-
-ifeq ($(PROFILING),1)
-	CFLAGS=-std=c11 -pg -Wpedantic -pedantic-errors -Wall -Wextra
-endif
-
-CFLAGS=-std=c11 -Wpedantic -pedantic-errors -Wall -Wextra $(debug)
 
 all: mkbuilddir $(BUILDPATH)$(LIBNAME)
 
@@ -98,7 +99,7 @@ clean:
 
 install:
 	mkdir -p $(INSTALL_ROOT)include
-	mkdir -p $(INSTALL_ROOT)lib
+	mkdir -p $(INSTALL_ROOT)lib$(BIT_SUFFIX)
 	cp ./include/renderer.h $(INSTALL_ROOT)include/renderer.h
 	cp ./include/camera.h $(INSTALL_ROOT)include/camera.h
-	cp $(BUILDPATH)$(LIBNAME) $(INSTALL_ROOT)lib/$(LIBNAME)
+	cp $(BUILDPATH)$(LIBNAME) $(INSTALL_ROOT)lib$(BIT_SUFFIX)/$(LIBNAME)
