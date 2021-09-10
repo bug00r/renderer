@@ -62,7 +62,7 @@ INCLUDEDIR= $(INCLUDE)
 
 TESTSRC=test/test_renderer.c
 TESTBIN=test_renderer.exe
-LIBS=-lscene -lmesh -lshape -ltexture -lnoise -lfractals -lcrgb_array -lfarray -larray -lcolor -lstatistics -lutilsmath -lmat -lvec
+LIBS=-lscene -lmesh -lshape -ltexture -lnoise -lfractals -lgeometry -lcrgb_array -lfarray -larray -lcolor -lstatistics -lutilsmath -lmat -lvec
 TESTLIB=-lrenderer 
 LIBDIR=-L$(BUILDDIR) $(LIB)
 

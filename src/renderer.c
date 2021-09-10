@@ -286,6 +286,138 @@ static bool __line_filter_or_clip(renderer_t* _renderer, vec3_t* _dest_start, ve
 	return true;
 }
 
+static void render_line_in_point_mode(renderer_t * _renderer, const shape_t *  shape) {
+	//VARS
+	renderer_t * renderer = _renderer;
+	const camera_t * cam = &renderer->camera;
+	const mat4_t * ct = &cam->transformation;
+	const vertex_t ** vertices = (const vertex_t **)shape->vertices;
+	const vertex_t * v1 = (const vertex_t *)vertices[0]; 
+	const vertex_t * v2 = (const vertex_t *)vertices[1];
+	const cRGB_t * v1c = &v1->color;
+	const int bufWidth = renderer->bufWidth;
+	const unsigned int imgW = renderer->imgWidth, imgH = renderer->imgHeight, used_samples = renderer->used_samples;
+	const float imgW_h = renderer->imgWidth_half, imgH_h = renderer->imgHeight_half;
+	vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
+		   pNDC2 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2;
+	cRGB_t * frameBuffer = renderer->frameBuffer;
+	float weight1 = ct->_44, 
+		  weight2 = ct->_44, 
+		  rz1, rz2, factor = 1.f;
+
+
+	//const vec3_t * v1v =  &v1->vec, * v2v =  &v2->vec;
+
+	vec3_t _v1v, _v2v;
+	const vec3_t * v1v = &_v1v, * v2v = &_v2v;
+	if ( !__line_filter_or_clip(renderer, &_v1v, &_v2v, &v1->vec, &v2->vec) ) {
+		return;
+	}
+	
+	_world_to_raster_line(v1v, &pNDC1,  &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct);
+	_world_to_raster_line(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct);
+
+	vec3_t normR1 = { fmaxf(0.f, fminf(pRaster1.x, imgW)), fmaxf(0.f, fminf(pRaster1.y, imgH)), pRaster1.z };
+	vec3_t normR2 = { fmaxf(0.f, fminf(pRaster2.x, imgW)), fmaxf(0.f, fminf(pRaster2.y, imgH)), pRaster2.z };
+
+	unsigned int bi1 = (normR1.y * bufWidth + (normR1.x * used_samples));
+	unsigned int bi2 = (normR2.y * bufWidth + (normR2.x * used_samples));
+
+	for (unsigned int sample = used_samples; sample--;) {
+		
+		unsigned int bi = bi1 + sample;
+
+		_set_color_to_fb_(frameBuffer,&bi ,&factor,v1c);
+
+		bi = bi2 + sample;
+
+		_set_color_to_fb_(frameBuffer,&bi ,&factor,v1c);
+
+	}	
+}
+
+/*
+static void gfx_draw_on_canvas(int32_t const * const x, int32_t const * const y, void *data) {
+	cdCanvasPixel((cdCanvas *)data, *x, cdCanvasInvertYAxis((cdCanvas *)data, *y), 0);
+}
+
+static void _gfx_algo_test_draw_line_trigger(Ihandle *_ih) {
+	Ihandle *ih = _ih;
+
+	vec2_t start = { IupGetInt((Ihandle *)IupGetAttribute(ih, "lx0"), "SPINVALUE"), IupGetInt((Ihandle *)IupGetAttribute(ih, "ly0"), "SPINVALUE") };
+	vec2_t end = { IupGetInt((Ihandle *)IupGetAttribute(ih, "lx1"), "SPINVALUE"), IupGetInt((Ihandle *)IupGetAttribute(ih, "ly1"), "SPINVALUE") };
+
+	void * data = IupGetAttribute((Ihandle*)IupGetAttribute(ih, "gfx_canvas"), "GFX_TEST_CD_CANVAS_DBUFFER");
+	geometry_line(&start, &end, gfx_draw_on_canvas, data);
+}
+*/
+typedef struct {
+	vec2_t *start; 
+	vec2_t* end;
+	renderer_t * renderer;
+	float factor;
+	const cRGB_t * color;
+} renderer_2d_line_ctx_t;
+
+//_set_color_to_fb_(frameBuffer,&bi ,&factor,v1c);
+static void _2d_line_to_framebuffer(int32_t const * const x, int32_t const * const y, void *data) {
+	renderer_2d_line_ctx_t* ctx = (renderer_2d_line_ctx_t*)data;
+	renderer_t *renderer = ctx->renderer;
+
+	if ( *x >= renderer->imgWidth || *x < 0 || 
+		*y >= renderer->imgHeight || *y < 0 ) return;
+
+	for (unsigned int sample = renderer->used_samples; sample--;) {
+		
+		unsigned int bi = (unsigned int)*y * renderer->bufWidth + *x + sample;
+		_set_color_to_fb_(renderer->frameBuffer, &bi , &ctx->factor, ctx->color);
+
+	}	
+
+}
+
+static void _draw_2D_line_to_renderer(renderer_t * _renderer, vec2_t *start, vec2_t* end, const cRGB_t * color) {
+	renderer_2d_line_ctx_t ctx = { start, end, _renderer, 1.f/_renderer->used_samples, color };
+	geometry_line(start, end, _2d_line_to_framebuffer, &ctx);
+}
+
+static void render_line_in_line_mode(renderer_t * _renderer, const shape_t *  shape) {
+
+	//VARS
+	renderer_t * renderer = _renderer;
+	const camera_t * cam = &renderer->camera;
+	const mat4_t * ct = &cam->transformation;
+	const vertex_t ** vertices = (const vertex_t **)shape->vertices;
+	const vertex_t * v1 = (const vertex_t *)vertices[0]; 
+	const vertex_t * v2 = (const vertex_t *)vertices[1];
+	const cRGB_t * v1c = &v1->color;
+	const unsigned int imgW = renderer->imgWidth, imgH = renderer->imgHeight;
+	const float imgW_h = renderer->imgWidth_half, imgH_h = renderer->imgHeight_half;
+	vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
+		   pNDC2 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2;
+	float weight1 = ct->_44, 
+		  weight2 = ct->_44, 
+		  rz1, rz2;
+
+
+	//const vec3_t * v1v =  &v1->vec, * v2v =  &v2->vec;
+
+	vec3_t _v1v, _v2v;
+	const vec3_t * v1v = &_v1v, * v2v = &_v2v;
+	if ( !__line_filter_or_clip(renderer, &_v1v, &_v2v, &v1->vec, &v2->vec) ) {
+		return;
+	}
+	
+	_world_to_raster_line(v1v, &pNDC1,  &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct);
+	_world_to_raster_line(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct);
+
+	vec2_t start = { pRaster1.x, pRaster1.y };
+	vec2_t end = { pRaster2.x, pRaster2.y };
+
+	_draw_2D_line_to_renderer(renderer, &start, &end, v1c);
+
+}
+
 static void render_line(renderer_t * _renderer, const shape_t * shape){
 	//VARS
 	renderer_t * renderer = _renderer;
@@ -455,7 +587,6 @@ static void render_point(renderer_t * renderer, const shape_t * shape){
 	const vertex_t * v1 = (const vertex_t *)vertices[0]; 
 	const vec3_t * v1v = &v1->vec;
 	const cRGB_t * v1c = &v1->color;
-	const vec2_t * v1t = &v1->texCoord;
 	const vec2_t * samples = renderer->samples;
 	const vec2_t * cursample;
 	const int bufWidth = renderer->bufWidth;
@@ -492,6 +623,101 @@ static void render_point(renderer_t * renderer, const shape_t * shape){
 	}
 }
 
+static void render_triangle_in_point_mode(renderer_t *  renderer, const shape_t *  shape) {
+	const camera_t *  cam = &renderer->camera;
+	const mat4_t *  ct = &cam->transformation;
+	const vertex_t **  vertices = (const vertex_t **)shape->vertices;
+	const vertex_t *  v1 = (const vertex_t *)vertices[0]; 
+	const vertex_t *  v2 = (const vertex_t *)vertices[1];
+	const vertex_t *  v3 = (const vertex_t *)vertices[2];
+	const vec3_t *  v1v = &v1->vec,* v2v = &v2->vec,* v3v = &v3->vec;
+	const cRGB_t *  v1c = &v1->color, * v2c = &v2->color, * v3c = &v3->color;
+	const int bufWidth = renderer->bufWidth;
+	const unsigned int imgW = renderer->imgWidth, imgH = renderer->imgHeight, used_samples = renderer->used_samples;
+	const float imgW_h = renderer->imgWidth_half, imgH_h = renderer->imgHeight_half;
+	vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
+		   pNDC2 = {ct->_14, ct->_24, ct->_34}, 
+		   pNDC3 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2, pRaster3;
+	cRGB_t *  frameBuffer = renderer->frameBuffer;
+	float *  zBuffer = renderer->zBuffer;
+	float weight1 = ct->_44, 
+		  weight2 = ct->_44, 
+		  weight3 = ct->_44, rz1, rz2, rz3, factor = 1.f;
+
+	//EO VARS
+
+	if (_world_to_raster(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct)) return; 
+	if (_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct)) return; 
+	if (_world_to_raster(v3v, &pNDC3, &pRaster3, &weight3, &imgW_h, &imgH_h, &rz3, ct)) return; 
+
+	bool is1in = (pRaster1.x < renderer->imgWidth) && (pRaster1.x >= 0) && (pRaster1.y < renderer->imgHeight) && (pRaster1.y >= 0 );
+	bool is2in = (pRaster2.x < renderer->imgWidth) && (pRaster2.x >= 0) && (pRaster2.y < renderer->imgHeight) && (pRaster2.y >= 0 );
+	bool is3in = (pRaster3.x < renderer->imgWidth) && (pRaster3.x >= 0) && (pRaster3.y < renderer->imgHeight) && (pRaster3.y >= 0 );
+
+	for (unsigned int sample = used_samples; sample--;) {
+		
+		
+		if ( is1in )  { 
+			unsigned int bi1 = (((unsigned int)pRaster1.y * bufWidth) + ((unsigned int)pRaster1.x * used_samples));
+			unsigned int bi = bi1 + sample;
+			_set_color_to_fb_(frameBuffer,&bi ,&factor,v1c); 
+		}
+		
+		if ( is2in)  {
+			unsigned int bi2 = (((unsigned int)pRaster2.y * bufWidth) + ((unsigned int)pRaster2.x * used_samples));
+			unsigned int bi = bi2 + sample;
+			_set_color_to_fb_(frameBuffer,&bi ,&factor,v2c); 
+		}
+		
+		if ( is3in )  {
+			unsigned int bi3 = (((unsigned int)pRaster3.y * bufWidth) + ((unsigned int)pRaster3.x * used_samples));
+			unsigned int bi = bi3 + sample;
+			_set_color_to_fb_(frameBuffer,&bi ,&factor,v3c); 
+		}
+		
+	}	
+}
+
+static void render_triangle_in_line_mode(renderer_t *  renderer, const shape_t *  shape) {
+	const camera_t *  cam = &renderer->camera;
+	const mat4_t *  ct = &cam->transformation;
+	const vertex_t **  vertices = (const vertex_t **)shape->vertices;
+	const vertex_t *  v1 = (const vertex_t *)vertices[0]; 
+	const vertex_t *  v2 = (const vertex_t *)vertices[1];
+	const vertex_t *  v3 = (const vertex_t *)vertices[2];
+	const vec3_t *  v1v = &v1->vec,* v2v = &v2->vec,* v3v = &v3->vec;
+	const cRGB_t *  v1c = &v1->color, * v2c = &v2->color, * v3c = &v3->color;
+	const unsigned int imgW = renderer->imgWidth, imgH = renderer->imgHeight;
+	const float imgW_h = renderer->imgWidth_half, imgH_h = renderer->imgHeight_half;
+	vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
+		   pNDC2 = {ct->_14, ct->_24, ct->_34}, 
+		   pNDC3 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2, pRaster3;
+	float weight1 = ct->_44, 
+		  weight2 = ct->_44, 
+		  weight3 = ct->_44, rz1, rz2, rz3;
+
+	//EO VARS
+
+	if (_world_to_raster(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct)) return; 
+	if (_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct)) return; 
+	if (_world_to_raster(v3v, &pNDC3, &pRaster3, &weight3, &imgW_h, &imgH_h, &rz3, ct)) return; 
+
+	vec2_t start = { pRaster1.x, pRaster1.y };
+	vec2_t end = { pRaster2.x, pRaster2.y };
+
+	_draw_2D_line_to_renderer(renderer, &start, &end, v1c);
+
+	start = (vec2_t){ pRaster2.x, pRaster2.y };
+	end = (vec2_t){ pRaster3.x, pRaster3.y };
+
+	_draw_2D_line_to_renderer(renderer, &start, &end, v2c);
+
+	start = (vec2_t){ pRaster3.x, pRaster3.y };
+	end = (vec2_t){ pRaster1.x, pRaster1.y };
+
+	_draw_2D_line_to_renderer(renderer, &start, &end, v3c);
+}
+
 static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 	//VARS
 	const camera_t *  cam = &renderer->camera;
@@ -521,7 +747,7 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 		  weight3 = ct->_44, rz1, rz2, rz3;
 	float *  zBuffer = renderer->zBuffer;
 
-	cRGB_t curCol1, *fbc, *txc;
+	cRGB_t curCol1;
 	//EO VARS
 
 	if (_world_to_raster(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct)) return; 
@@ -577,13 +803,14 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 
 void render_shape(renderer_t *  renderer, const shape_t *  shape){
 	const shape_t *  curshape = shape;
+	const renderer_t * curRenderer = renderer;
 	switch(curshape->cntVertex){
 		case 3:
-			render_triangle(renderer, curshape); break;
+			curRenderer->TRIANGLE_RENDER_FUNC(renderer, curshape); break;
 		case 2:
-			render_line(renderer, curshape); break;
+			curRenderer->LINE_RENDER_FUNC(renderer, curshape); break;
 		case 1:
-			render_point(renderer, curshape); break;
+			curRenderer->POINT_RENDER_FUNC(renderer, curshape); break;
 		default:
 			printf("Unknown vertex count oO\n");
 	}
@@ -614,6 +841,25 @@ void renderer_clear_frame(renderer_t * renderer){
 	memset(renderer->frameBuffer, 0, buffersize * sizeof(cRGB_t));
 	renderer->max_z = RENDER_FLT_MAX;
 	renderer->min_z = 0.f;
+}
+
+
+void renderer_set_vmode_solid(renderer_t * renderer) {
+	renderer->POINT_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_point;
+	renderer->LINE_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_line;
+	renderer->TRIANGLE_RENDER_FUNC 	= (RENDERER_RENDER_FUNC)render_triangle;
+}
+
+void renderer_set_vmode_point(renderer_t * renderer) {
+	renderer->POINT_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_point;
+	renderer->LINE_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_line_in_point_mode;
+	renderer->TRIANGLE_RENDER_FUNC 	= (RENDERER_RENDER_FUNC)render_triangle_in_point_mode;
+}
+
+void renderer_set_vmode_line(renderer_t * renderer) {
+	renderer->POINT_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_point;
+	renderer->LINE_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_line_in_line_mode;
+	renderer->TRIANGLE_RENDER_FUNC 	= (RENDERER_RENDER_FUNC)render_triangle_in_line_mode;
 }
 
 renderer_t * 
@@ -655,6 +901,8 @@ renderer_new(int imgWidth, int imgHeight, cRGB_t * bgColor, unsigned int samples
 		}
 	}
 	
+	renderer_set_vmode_solid(newrenderer);
+
 	return newrenderer;
 }
 

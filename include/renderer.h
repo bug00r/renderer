@@ -11,10 +11,12 @@
 #include <math.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "vec.h"
 #include "mat.h"
 #include "utils_math.h"
+#include "geometry.h"
 #include "mesh.h"
 #include "scene.h"
 #include "camera.h"
@@ -26,7 +28,9 @@ typedef enum {
 	RP_ORTHOGRAPHIC
 } projection_t;
 
-typedef struct {
+typedef void (*RENDERER_RENDER_FUNC)(void *, const shape_t*);
+
+typedef struct _renderer {
 	int imgWidth;
 	int imgHeight;
 	float imgWidth_half;
@@ -46,7 +50,11 @@ typedef struct {
 	projection_t projection;
 	float min_z;
 	float max_z;
+	RENDERER_RENDER_FUNC POINT_RENDER_FUNC;
+	RENDERER_RENDER_FUNC LINE_RENDER_FUNC;
+	RENDERER_RENDER_FUNC TRIANGLE_RENDER_FUNC;
 } renderer_t;
+
 
 
 #if 0
@@ -64,6 +72,19 @@ void render_mesh(renderer_t * renderer, const mesh_t * mesh);
 void render_shape(renderer_t * renderer, const shape_t * shape);
 
 void renderer_clear_frame(renderer_t * renderer);
+
+/* 
+	This function set solid renderer view mode. This means it renders interpolated colors by vertex or texture like expected.
+*/
+void renderer_set_vmode_solid(renderer_t * renderer);
+/* 
+	This function set solid renderer point mode. This means it renders only vertex points colors.
+*/
+void renderer_set_vmode_point(renderer_t * renderer);
+/* 
+	This function set solid renderer point mode. This means it renders only edge lines where it is possibl, points will be handled like in point view mode.
+*/
+void renderer_set_vmode_line(renderer_t * renderer);
 
 #if 0
 	/**
