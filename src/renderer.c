@@ -415,7 +415,6 @@ static void render_line_in_line_mode(renderer_t * _renderer, const shape_t *  sh
 	vec2_t end = { pRaster2.x, pRaster2.y };
 
 	_draw_2D_line_to_renderer(renderer, &start, &end, v1c);
-
 }
 
 static void render_line(renderer_t * _renderer, const shape_t * shape){
