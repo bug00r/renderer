@@ -369,10 +369,10 @@ static void _2d_line_to_framebuffer(int32_t const * const x, int32_t const * con
 
 	for (unsigned int sample = renderer->used_samples; sample--;) {
 		
-		unsigned int bi = (unsigned int)*y * renderer->bufWidth + *x + sample;
+		 unsigned int bi = ((unsigned int)*y * renderer->bufWidth ) + ( *x * renderer->used_samples ) + sample;
 		_set_color_to_fb_(renderer->frameBuffer, &bi , &ctx->factor, ctx->color);
 
-	}	
+	}
 
 }
 
@@ -508,7 +508,7 @@ static bool _compute_sample_bc_and_check(vec3_t * _pixelSample, const vec2_t ** 
 
 #if 0
 	/**
-		returns false if pixel should skipped otherwise false.
+		returns true if pixel should skipped otherwise false.
 	*/
 #endif
 static bool _compute_and_set_z(const float * rz1, const float * rz2, const float * rz3,
@@ -753,10 +753,11 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 	if (_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct)) return; 
 	if (_world_to_raster(v3v, &pNDC3, &pRaster3, &weight3, &imgW_h, &imgH_h, &rz3, ct)) return; 
 
+	/*
 	_write_vertex_info((vertex_t *)v1,  &pRaster1, &pNDC1 );
 	_write_vertex_info((vertex_t *)v2,  &pRaster2, &pNDC2 );
 	_write_vertex_info((vertex_t *)v3,  &pRaster3, &pNDC3 );
-
+    */
 	bc.area = 1.f/((pRaster3.x - pRaster1.x) * (pRaster2.y - pRaster1.y) - (pRaster3.y - pRaster1.y) * (pRaster2.x - pRaster1.x));
 
 	_compute_min_max_w_h(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH,
