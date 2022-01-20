@@ -30,7 +30,7 @@ static void _set_color_to_fb_(cRGB_t * frameBuffer,
 	fbc->b = new_color->b * sf;
 }
 
-static void _compute_px_color(cRGB_t * color, 
+static bool _compute_px_color(cRGB_t * color, 
 							  const barycentric_t *bc, 
 							  const float * weight1, const float * weight2, const float * weight3,
 							  const texture_t * texture, const unsigned int * imgW,
@@ -52,7 +52,7 @@ static void _compute_px_color(cRGB_t * color,
 			break;
 		default: {
 				float texx = ( z0*v1t->x + z1*v2t->x + z2*v3t->x ) * z3 * texture->width;
-				float texy = ( z0*v1t->y + z1*v2t->y + z2*v3t->y ) * z3 * texture->width;
+				float texy = ( z0*v1t->y + z1*v2t->y + z2*v3t->y ) * z3 * texture->height;
 
 				//texx = ceilf(interpolate_lin(texx, 0.f, 0.f, 1.f, texture->width));
 				//texy = ceilf(interpolate_lin(texy, 0.f, 0.f, 1.f, texture->height));
@@ -64,10 +64,15 @@ static void _compute_px_color(cRGB_t * color,
 				color->g = txc->g;
 				color->b = txc->b;
 				*/
-				
+				if ( color->r == 1.f && color->g == 0.f && color->b == 1.f  )
+				{
+					return false;
+				}
 			}						
 			break;
 	}
+
+	return true;
 }
 
 
@@ -796,10 +801,11 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 				//	printf("----- CUBE w/h: %i/%i ", curW, curH);
 					if ( _compute_and_set_z(&rz1, &rz2, &rz3,&bc, &bi, zBuffer) )  { continue; }
 					
-					_compute_px_color(&curCol1, &bc, &weight1, &weight2, &weight3,
-									renderer->texture, &imgW, v1c, v2c, v3c, v1t, v2t, v3t, &texId);
-
-					_set_color_to_fb_(frameBuffer,&bi ,&sample_factor,&curCol1);
+					if ( _compute_px_color(&curCol1, &bc, &weight1, &weight2, &weight3,
+									renderer->texture, &imgW, v1c, v2c, v3c, v1t, v2t, v3t, &texId))
+					{
+						_set_color_to_fb_(frameBuffer,&bi ,&sample_factor,&curCol1);
+					}
 					//EO COLOR AND TEX
 				//}
 			}
