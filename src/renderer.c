@@ -33,7 +33,7 @@ static void _set_color_to_fb_(cRGB_t * frameBuffer,
 static void _compute_px_color(cRGB_t * color, 
 							  const barycentric_t *bc, 
 							  const float * weight1, const float * weight2, const float * weight3,
-							  const cRGB_t * texture, const unsigned int * imgW,
+							  const texture_t * texture, const unsigned int * imgW,
 							  const cRGB_t * v1c, const cRGB_t * v2c, const cRGB_t * v3c,
 							  const vec2_t * v1t, const vec2_t * v2t, const vec2_t * v3t,
 							  const int *texId) {
@@ -51,13 +51,20 @@ static void _compute_px_color(cRGB_t * color,
 			}
 			break;
 		default: {
-			int texx = (int)(( z0*v1t->x + z1*v2t->x + z2*v3t->x ) * z3 * 512.f);
-			int texy = (int)(( z0*v1t->y + z1*v2t->y + z2*v3t->y ) * z3 * 512.f);
-			
-			const cRGB_t * txc = &texture[texy * (*imgW) + texx];
-			color->r = txc->r;
-			color->g = txc->g;
-			color->b = txc->b;
+				float texx = ( z0*v1t->x + z1*v2t->x + z2*v3t->x ) * z3 * texture->width;
+				float texy = ( z0*v1t->y + z1*v2t->y + z2*v3t->y ) * z3 * texture->width;
+
+				//texx = ceilf(interpolate_lin(texx, 0.f, 0.f, 1.f, texture->width));
+				//texy = ceilf(interpolate_lin(texy, 0.f, 0.f, 1.f, texture->height));
+				crgb_array2D_get(texture->buffer, (int)texx, (int)texy, color);
+				//printf("tx: %f ty: %f, rgb: %f %f %f\n", texx, texy, color->r, color->g, color->b);
+
+				/*cRGB_t * txc = &((cRGB_t *)texture->buffer->entries)[(int)texy * texture->width + (int)texx];
+				color->r = txc->r;
+				color->g = txc->g;
+				color->b = txc->b;
+				*/
+				
 			}						
 			break;
 	}
@@ -913,7 +920,7 @@ renderer_free(renderer_t * renderer){
 	free(renderer->samples);
 	//free(renderer->wh_index);
 	if (renderer->texture != NULL) {
-		free(renderer->texture);
+		texture_free(renderer->texture);
 	}
 	free(renderer);
 }

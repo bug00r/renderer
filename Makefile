@@ -84,7 +84,7 @@ $(BUILDPATH)camera.o: src/camera.c
 	$(CC) $(CFLAGS) -c src/camera.c -o $(BUILDPATH)camera.o  $(INCLUDEDIR)
 	
 $(BUILDPATH)$(TESTBIN):
-	$(CC) $(CFLAGS) $(TESTSRC) -o $(BUILDPATH)$(TESTBIN) $(INCLUDEDIR) $(LIBDIR) $(LIBDIR) $(LIBS) $(TESTLIB)
+	$(CC) $(CFLAGS) $(TESTSRC) -o $(BUILDPATH)$(TESTBIN) $(INCLUDEDIR) $(LIBDIR) $(LIBDIR) $(LIBS) $(TESTLIB) 
 	
 .PHONY: clean mkbuilddir test
 

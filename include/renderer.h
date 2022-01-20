@@ -20,6 +20,7 @@
 #include "mesh.h"
 #include "scene.h"
 #include "camera.h"
+#include "texture.h"
 
 #define RENDER_FLT_MAX 339615136492207130000000000000000000000.000000
 
@@ -45,7 +46,7 @@ typedef struct _renderer {
 	float sample_factor;
 	cRGB_t * frameBuffer;
 	float * zBuffer;
-	cRGB_t * texture; //TODO here we need a list of textures...currently we use one as test
+	texture_t *texture; //TODO here we need a list of textures...currently we use one as test
 	cRGB_t bgcolor;
 	projection_t projection;
 	float min_z;
