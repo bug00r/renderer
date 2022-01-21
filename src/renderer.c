@@ -51,6 +51,8 @@ static bool _compute_px_color(cRGB_t * color,
 			}
 			break;
 		default: {
+				if ( texture == NULL ) return false;
+
 				float texx = ( z0*v1t->x + z1*v2t->x + z2*v3t->x ) * z3 * texture->width;
 				float texy = ( z0*v1t->y + z1*v2t->y + z2*v3t->y ) * z3 * texture->height;
 
@@ -775,16 +777,9 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 	_compute_min_max_w_h(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH,
 						 &pRaster1, &pRaster2, &pRaster3);
 	
-	/*int part = 30;
-	int low = 255 - part;
-	int up = 255 + part;
+	texture_cache_t * cache = renderer->texture_cache;
+	texture_t *texture = texture_cache_get(cache, (unsigned int)shape->texId); 
 
-	maxy = up;
-	minx = low;
-	curH = low;
-	*/
-	//EO BOUNDING BOX
-	//old vERSION JUST WORKING FINE. see below improoved version
 	for(; curH < maxy; ++curH) {
 		unsigned int curHbufWidth = curH * bufWidth;
 		for(curW = minx; curW < maxx; ++curW) {
@@ -802,7 +797,7 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 					if ( _compute_and_set_z(&rz1, &rz2, &rz3,&bc, &bi, zBuffer) )  { continue; }
 					
 					if ( _compute_px_color(&curCol1, &bc, &weight1, &weight2, &weight3,
-									renderer->texture, &imgW, v1c, v2c, v3c, v1t, v2t, v3t, &texId))
+									texture, &imgW, v1c, v2c, v3c, v1t, v2t, v3t, &texId))
 					{
 						_set_color_to_fb_(frameBuffer,&bi ,&sample_factor,&curCol1);
 					}
@@ -879,7 +874,7 @@ renderer_t *
 renderer_new(int imgWidth, int imgHeight, cRGB_t * bgColor, unsigned int samplestep){
 	renderer_t * newrenderer = malloc(sizeof(renderer_t));
 	newrenderer->projection = RP_ORTHOGRAPHIC;
-	newrenderer->texture = NULL;
+	//newrenderer->texture = NULL;
 	newrenderer->imgWidth = imgWidth;
 	newrenderer->imgHeight = imgHeight;
 	newrenderer->imgWidth_half = 0.5f * imgWidth;
@@ -915,6 +910,7 @@ renderer_new(int imgWidth, int imgHeight, cRGB_t * bgColor, unsigned int samples
 	}
 	
 	renderer_set_vmode_solid(newrenderer);
+	newrenderer->texture_cache = texture_cache_new();
 
 	return newrenderer;
 }
@@ -925,9 +921,10 @@ renderer_free(renderer_t * renderer){
 	free(renderer->zBuffer);
 	free(renderer->samples);
 	//free(renderer->wh_index);
-	if (renderer->texture != NULL) {
-		texture_free(renderer->texture);
-	}
+	texture_cache_free(&renderer->texture_cache);
+	//if (renderer->texture != NULL) {
+	//	texture_free(renderer->texture);
+	//}
 	free(renderer);
 }
 
