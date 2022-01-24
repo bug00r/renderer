@@ -53,7 +53,7 @@ LIB?=-L/c/dev/lib$(BIT_SUFFIX)
 INCLUDE?= -I/c/dev/include -I./include
 
 LIBNAME=librenderer.a
-OBJS=$(BUILDPATH)renderer.o $(BUILDPATH)camera.o $(BUILDPATH)texture_cache.o
+OBJS=$(BUILDPATH)renderer.o $(BUILDPATH)camera.o
 SRC_DIR=src/
 SRC_FILES=camera renderer
 SRC=$(patsubst %,$(SRC_DIR)%.c,$(SRC_FILES))
@@ -61,9 +61,7 @@ SRC=$(patsubst %,$(SRC_DIR)%.c,$(SRC_FILES))
 INCLUDEDIR= $(INCLUDE)
 
 TESTSRC=test/test_renderer.c
-CACHETESTSRC=test/test_texture_cache.c
 TESTBIN=test_renderer.exe
-CACHETESTBIN=test_texture_cache.exe
 LIBS=-lscene -lmesh -lshape -ltexture -lnoise -lfractals -lgeometry -lcrgb_array -ldl_list -lfarray -larray -lcolor -lstatistics -lutilsmath -lmat -lvec
 TESTLIB=-lrenderer 
 LIBDIR=-L$(BUILDDIR) $(LIB)
@@ -85,20 +83,12 @@ $(BUILDPATH)renderer.o: src/renderer.c
 $(BUILDPATH)camera.o: src/camera.c
 	$(CC) $(CFLAGS) -c src/camera.c -o $(BUILDPATH)camera.o  $(INCLUDEDIR)
 	
-$(BUILDPATH)texture_cache.o: src/texture_cache.c
-	$(CC) $(CFLAGS) -c src/texture_cache.c -o $(BUILDPATH)texture_cache.o  $(INCLUDEDIR)
-	
 $(BUILDPATH)$(TESTBIN):
 	$(CC) $(CFLAGS) $(TESTSRC) -o $(BUILDPATH)$(TESTBIN) $(INCLUDEDIR) $(LIBDIR) $(LIBDIR) $(TESTLIB) $(LIBS) 
 
-$(BUILDPATH)$(CACHETESTBIN):
-	$(CC) $(CFLAGS) $(CACHETESTSRC) -o $(BUILDPATH)$(CACHETESTBIN) $(INCLUDEDIR) $(LIBDIR) $(LIBDIR) $(TESTLIB) $(LIBS) 
-
 .PHONY: clean mkbuilddir test
 
-test: mkbuilddir $(BUILDPATH)$(LIBNAME) $(BUILDPATH)$(TESTBIN) $(BUILDPATH)$(CACHETESTBIN)
-	./$(BUILDPATH)$(TESTBIN)
-	./$(BUILDPATH)$(CACHETESTBIN)
+test: mkbuilddir $(BUILDPATH)$(LIBNAME) $(BUILDPATH)$(TESTBIN)
 
 mkbuilddir:
 	mkdir -p $(BUILDDIR)
@@ -111,5 +101,4 @@ install:
 	mkdir -p $(INSTALL_ROOT)lib$(BIT_SUFFIX)
 	cp ./include/renderer.h $(INSTALL_ROOT)include/renderer.h
 	cp ./include/camera.h $(INSTALL_ROOT)include/camera.h
-	cp ./include/texture_cache.h $(INSTALL_ROOT)include/texture_cache.h
 	cp $(BUILDPATH)$(LIBNAME) $(INSTALL_ROOT)lib$(BIT_SUFFIX)/$(LIBNAME)
