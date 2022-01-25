@@ -40,16 +40,8 @@ static bool _compute_px_color(cRGB_t * color,
 				float texx = ( z0*v1t->x + z1*v2t->x + z2*v3t->x ) * z3 * texture->width;
 				float texy = ( z0*v1t->y + z1*v2t->y + z2*v3t->y ) * z3 * texture->height;
 
-				//texx = ceilf(interpolate_lin(texx, 0.f, 0.f, 1.f, texture->width));
-				//texy = ceilf(interpolate_lin(texy, 0.f, 0.f, 1.f, texture->height));
 				crgb_array2D_get(texture->buffer, (int)texx, (int)texy, color);
-				//printf("tx: %f ty: %f, rgb: %f %f %f\n", texx, texy, color->r, color->g, color->b);
 
-				/*cRGB_t * txc = &((cRGB_t *)texture->buffer->entries)[(int)texy * texture->width + (int)texx];
-				color->r = txc->r;
-				color->g = txc->g;
-				color->b = txc->b;
-				*/
 				if ( color->r == 1.f && color->g == 0.f && color->b == 1.f  )
 				{
 					return false;
@@ -106,19 +98,7 @@ static bool _compute_sample_and_check_point(vec3_t * _pixelSample, const vec2_t 
 	return true;
 }
 
-/*
-		if(	(((bc->w0_12 = (pixelSample->x - pRaster2->x) * (pRaster3->y - pRaster2->y) - (pixelSample->y - pRaster2->y) * (pRaster3->x - pRaster2->x))<0.f) ||
-		(( bc->w1_20  = (pixelSample->x - pRaster3->x) * (pRaster1->y - pRaster3->y) - (pixelSample->y - pRaster3->y) * (pRaster1->x - pRaster3->x))<0.f) ||	
-		(( bc->w2_01  = (pixelSample->x - pRaster1->x) * (pRaster2->y - pRaster1->y) - (pixelSample->y - pRaster1->y) * (pRaster2->x - pRaster1->x))<0.f))) 
-		{ return true;}
-	
-	bc->bc0 = bc->w0_12 * bc->area;
-	bc->bc1 = bc->w1_20 * bc->area;
-	bc->bc2 = bc->w2_01 * bc->area;
-
-	bc.area = 1.f/((pRaster3.x - pRaster1.x) * (pRaster2.y - pRaster1.y) - (pRaster3.y - pRaster1.y) * (pRaster2.x - pRaster1.x));
-*/
-static bool _compute_sample_bc_and_check_line(vec3_t * _pixelSample, const vec2_t ** _cursample,
+static bool _compute_sample_bc_and_check_line(const float *_limit, const float *_raster_len, const float *_raster_len_inv, vec3_t * _pixelSample, const vec2_t ** _cursample,
 										 const unsigned int *curW, const unsigned int *curH,
 										 barycentric_t * _bc, const vec3_t * pRaster1, const vec3_t * pRaster2) { 
 	vec3_t * pixelSample = _pixelSample;
@@ -127,31 +107,21 @@ static bool _compute_sample_bc_and_check_line(vec3_t * _pixelSample, const vec2_
 
 	bc->bc0 = (pixelSample->x - pRaster1->x ) * (pRaster2->y - pRaster1->y) - (pixelSample->y - pRaster1->y) * (pRaster2->x - pRaster1->x);
 
-	/*if (bc->bc0 < 0) {
-		bc->bc0 = (pixelSample->x - pRaster2->x ) * (pRaster1->y - pRaster2->y) - (pixelSample->y - pRaster2->y) * (pRaster1->x - pRaster2->x);
-	}*/
-
 	float edge = bc->bc0;
 
-	vec3_t limitvec;
-	vec3_sub_dest(&limitvec, pRaster2, pRaster1);
-	float limit = vec3_length(&limitvec);
-	limit *= 0.5f;
+	const float limit = (const float)*_limit;
+	const float raster_len_inv = (const float)*_raster_len_inv;
+	const float raster_len = (const float)*_raster_len;
+
 	if ( ( edge <= limit && edge >= -limit ) ) {
 
 		vec2_t tmp;
-		vec2_sub_dest(&tmp, (vec2_t*)pRaster2, (vec2_t*)pRaster1);
-		float len = vec2_length(&tmp);
 		vec2_sub_dest(&tmp, (vec2_t*)pixelSample, (vec2_t*)pRaster1);
 		float len2 = vec2_length(&tmp);
-		/*(1)*/
-		bc->bc0 = len2 / len;
-		bc->bc1 = (len-len2) / len;
+
+		bc->bc0 = len2 * raster_len_inv;
+		bc->bc1 = (raster_len - len2) * raster_len_inv;
 			
-		/*(2)
-		bc->bc0 = len;
-		bc->bc1 = len2;
-		*/
 		return false;
 	} 
 	return true;								 
@@ -160,18 +130,13 @@ static bool _compute_sample_bc_and_check_line(vec3_t * _pixelSample, const vec2_
 
 static bool _compute_and_set_z_line(const float * rz1, const float * rz2, const barycentric_t *bc, 
 								    const unsigned int * bi, float * zBuffer) {
-	/*(1)*/
+
 	float z = *rz1;
 	if ( *rz1 != *rz2 ) {
 		z =  *rz1 * bc->bc1; 
 		z += *rz2 * bc->bc0; 
 	}
 
-	/*(2)
-	float _rz1a = bc->bc1 / bc->bc0;
-	float _rz2a = (bc->bc0 - bc->bc1) / bc->bc0;
-	float z = interpolate_lin(bc->bc1, 0.f ,*rz1 * _rz2a, bc->bc0, *rz2 * _rz1a);
-	*/
 	float * old_z = zBuffer + *bi;
 
 	if ( z < *old_z ) { return true; }	
@@ -281,9 +246,6 @@ static void render_line_in_point_mode(renderer_t * _renderer, const shape_t *  s
 		  weight2 = ct->_44, 
 		  rz1, rz2, factor = 1.f;
 
-
-	//const vec3_t * v1v =  &v1->vec, * v2v =  &v2->vec;
-
 	vec3_t _v1v, _v2v;
 	const vec3_t * v1v = &_v1v, * v2v = &_v2v;
 	if ( !__line_filter_or_clip(renderer, &_v1v, &_v2v, &v1->vec, &v2->vec) ) {
@@ -312,21 +274,6 @@ static void render_line_in_point_mode(renderer_t * _renderer, const shape_t *  s
 	}	
 }
 
-/*
-static void gfx_draw_on_canvas(int32_t const * const x, int32_t const * const y, void *data) {
-	cdCanvasPixel((cdCanvas *)data, *x, cdCanvasInvertYAxis((cdCanvas *)data, *y), 0);
-}
-
-static void _gfx_algo_test_draw_line_trigger(Ihandle *_ih) {
-	Ihandle *ih = _ih;
-
-	vec2_t start = { IupGetInt((Ihandle *)IupGetAttribute(ih, "lx0"), "SPINVALUE"), IupGetInt((Ihandle *)IupGetAttribute(ih, "ly0"), "SPINVALUE") };
-	vec2_t end = { IupGetInt((Ihandle *)IupGetAttribute(ih, "lx1"), "SPINVALUE"), IupGetInt((Ihandle *)IupGetAttribute(ih, "ly1"), "SPINVALUE") };
-
-	void * data = IupGetAttribute((Ihandle*)IupGetAttribute(ih, "gfx_canvas"), "GFX_TEST_CD_CANVAS_DBUFFER");
-	geometry_line(&start, &end, gfx_draw_on_canvas, data);
-}
-*/
 typedef struct {
 	vec2_t *start; 
 	vec2_t* end;
@@ -335,7 +282,7 @@ typedef struct {
 	const cRGB_t * color;
 } renderer_2d_line_ctx_t;
 
-//_set_color_to_fb_(frameBuffer,&bi ,&factor,v1c);
+
 static void _2d_line_to_framebuffer(int32_t const * const x, int32_t const * const y, void *data) {
 	renderer_2d_line_ctx_t* ctx = (renderer_2d_line_ctx_t*)data;
 	renderer_t *renderer = ctx->renderer;
@@ -400,7 +347,10 @@ typedef struct {
 	float *rz1;
 	float *rz2;
 	unsigned int cntDeltaVecs;
-	vec2_t *deltaVecs;
+	const vec2_t *deltaVecs;
+	const float *limit;
+	const float *raster_len;
+	const float *raster_len_inv;
 } renderer_3d_line_ctx_t;
 
 static void _3d_line_to_framebuffer(int32_t const * const x, int32_t const * const y, void *data) 
@@ -431,9 +381,13 @@ static void _3d_line_to_framebuffer(int32_t const * const x, int32_t const * con
 
 	const cRGB_t *color = ctx->color; 
 
+	const float *limit = ctx->limit;
+	const float *raster_len = ctx->raster_len;
+	const float *raster_len_inv = ctx->raster_len_inv;
+
 	for ( uint32_t curDeltaVec = 0; curDeltaVec < ctx->cntDeltaVecs; curDeltaVec++ )
 	{
-		vec2_t *deltaVec = &ctx->deltaVecs[curDeltaVec];
+		const vec2_t *deltaVec = &ctx->deltaVecs[curDeltaVec];
 		const unsigned int curH = _y + (unsigned int)deltaVec->y;
 		const unsigned int curW = _x + (unsigned int)deltaVec->x;
 
@@ -443,7 +397,7 @@ static void _3d_line_to_framebuffer(int32_t const * const x, int32_t const * con
 		unsigned int curWused_samples = curHbufWidth + (curW * used_samples); 
 		for (unsigned int sample = used_samples; sample--;) {
 
-			if ( _compute_sample_bc_and_check_line(&pixelSample, &cursample,&curW, &curH, &bc,
+			if ( _compute_sample_bc_and_check_line(limit, raster_len, raster_len_inv, &pixelSample, &cursample,&curW, &curH, &bc,
 										pRaster1, pRaster2)) { continue; }
 			
 			unsigned int bi = curWused_samples + sample;
@@ -454,16 +408,6 @@ static void _3d_line_to_framebuffer(int32_t const * const x, int32_t const * con
 		}
 	}
 
-}
-
-static void _draw_3D_line_to_renderer(renderer_t * _renderer, vec2_t *start, vec2_t* end, const cRGB_t * color,
-	float *rz1, float *rz2, vec3_t *pRaster1, vec3_t *pRaster2) 
-{
-	vec2_t deltaVecs[5] = { {0.f , 0.f}, {-1.f , 0.f}, {1.f , 0.f}, {0.f , 1.f}, {0.f , -1.f} };
-	renderer_3d_line_ctx_t ctx = { 
-		pRaster1, pRaster2, _renderer, color, rz1, rz2, 5, &deltaVecs[0]		
-	};
-	geometry_line(start, end, _3d_line_to_framebuffer, &ctx);
 }
 
 static void render_line(renderer_t * _renderer, const shape_t * shape){
@@ -491,12 +435,25 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 	_world_to_raster_line(v1v, &pNDC1,  &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct);
 	_world_to_raster_line(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct);
 
-	//_compute_min_max_w_h_line(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH, &pRaster1, &pRaster2);
-	
+	vec3_t limitvec;
+	vec3_sub_dest(&limitvec, &pRaster2, &pRaster1);
+	float limit = vec3_length(&limitvec);
+	limit *= 0.5f;
+
 	vec2_t start = { pRaster1.x, pRaster1.y };
 	vec2_t end = { pRaster2.x, pRaster2.y };
 
-	_draw_3D_line_to_renderer(renderer, &start, &end, v1c, &rz1, &rz2, &pRaster1, &pRaster2);
+	vec2_t tmp;
+	vec2_sub_dest(&tmp, &end, &start);
+	float raster_len = vec2_length(&tmp);
+	float raster_len_inv = 1.f / raster_len;
+
+	const vec2_t deltaVecs[5] = { {0.f , 0.f}, {-1.f , 0.f}, {1.f , 0.f}, {0.f , 1.f}, {0.f , -1.f} };
+	renderer_3d_line_ctx_t ctx = { 
+		&pRaster1, &pRaster2, _renderer, v1c, &rz1, &rz2, 5, &deltaVecs[0], 
+		(const float*)&limit, (const float*)&raster_len, (const float*)&raster_len_inv		
+	};
+	geometry_line(&start, &end, _3d_line_to_framebuffer, &ctx);
 }
 
 #if 0
@@ -538,16 +495,10 @@ static bool _compute_and_set_z(const float * rz1, const float * rz2, const float
 	
 	float *old_z = zBuffer + *bi;
 
-	//printf(" rz1: %f , rz2: %f, rz3: %f, bc->bc0: %f, bc->bc1: %f , bc->bc2: %f ,bc->area: %f ,old_z: %f new z: %f\n",
-	//						*rz1, *rz2, *rz3, bc->bc0, bc->bc1, bc->bc2, bc->area,*old_z, z);
-
 	if ( z < *old_z ) { return true; }
 
 	*old_z = z;			
 	
-	//only for z buffer print 
-	//renderer->min_z = fminf(renderer->min_z, z);
-	//renderer->max_z = fmaxf(renderer->max_z, z);
 	return false;
 }
 
