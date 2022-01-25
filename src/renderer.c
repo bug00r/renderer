@@ -181,26 +181,6 @@ static bool _compute_and_set_z_line(const float * rz1, const float * rz2, const 
 	return false;
 }
 
-
-static void _compute_min_max_w_h_line(float *maxx, float *maxy, float *minx, float *miny,
-								 unsigned int *curW, unsigned int *curH, const unsigned int *imgW, const unsigned int *imgH,
-								 const vec3_t * pRaster1, const vec3_t * pRaster2 ) {
-	*maxx = fminf((float)*imgW, fmaxf(pRaster1->x, pRaster2->x));
-	*maxy = fminf((float)*imgH, fmaxf(pRaster1->y, pRaster2->y));
-	*minx = fmaxf(0.f, fminf(pRaster1->x, pRaster2->x));
-	*miny = fmaxf(0.f, fminf(pRaster1->y, pRaster2->y));
-	
-	if ( *minx == *maxx ) {
-		*minx -= 2.f; *maxx+=2.f;
-	}
-	
-	if ( *miny == *maxy ) {
-		*miny -= 2.f; *maxy+=2.f;
-	}
-	*curH = *miny;
-	*curW = *minx;
-}
-
 static bool _world_to_raster_line(const vec3_t * _v, vec3_t * _ndc, vec3_t * _raster, float * _weight,
 							 const float * imgW_h, const float * imgH_h, float * rz3, const mat4_t * _ct) {
 	
@@ -495,13 +475,10 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 	const vertex_t * v1 = (const vertex_t *)vertices[0]; 
 	const vertex_t * v2 = (const vertex_t *)vertices[1];
 	const cRGB_t * v1c = &v1->color;
-	const unsigned int imgW = renderer->imgWidth, imgH = renderer->imgHeight;
 	const float imgW_h = renderer->imgWidth_half, imgH_h = renderer->imgHeight_half;
 	vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
 		   pNDC2 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2;
-	unsigned int curW, curH;
-	float maxx, maxy, minx, miny, 
-		  weight1 = ct->_44, 
+	float weight1 = ct->_44, 
 		  weight2 = ct->_44, 
 		  rz1, rz2;
 
@@ -514,7 +491,7 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 	_world_to_raster_line(v1v, &pNDC1,  &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct);
 	_world_to_raster_line(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct);
 
-	_compute_min_max_w_h_line(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH, &pRaster1, &pRaster2);
+	//_compute_min_max_w_h_line(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH, &pRaster1, &pRaster2);
 	
 	vec2_t start = { pRaster1.x, pRaster1.y };
 	vec2_t end = { pRaster2.x, pRaster2.y };
