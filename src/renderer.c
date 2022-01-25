@@ -682,6 +682,21 @@ static void render_triangle_in_line_mode(renderer_t *  renderer, const shape_t *
 	_draw_2D_line_to_renderer(renderer, &start, &end, v3c);
 }
 
+static bool __r_triangle_is_backface(vec3_t *pNDC1, vec3_t *pNDC2, vec3_t *pNDC3)
+{
+	vec3_t pNDC2_1;
+	vec3_sub_dest(&pNDC2_1, pNDC2, pNDC1);
+	vec3_t pNDC3_1;
+	vec3_sub_dest(&pNDC3_1, pNDC3, pNDC1);
+	
+
+	vec3_t normal;
+	vec3_cross_dest(&normal, &pNDC2_1, &pNDC3_1);
+	
+	if ( normal.z < 0.f ) return true;
+	return false;
+}
+
 static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 	//VARS
 	const camera_t *  cam = &renderer->camera;
@@ -718,6 +733,8 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 	if (_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct)) return; 
 	if (_world_to_raster(v3v, &pNDC3, &pRaster3, &weight3, &imgW_h, &imgH_h, &rz3, ct)) return; 
 
+	if (__r_triangle_is_backface(&pNDC1, &pNDC2, &pNDC3)) return;
+
 	bc.area = 1.f/((pRaster3.x - pRaster1.x) * (pRaster2.y - pRaster1.y) - (pRaster3.y - pRaster1.y) * (pRaster2.x - pRaster1.x));
 
 	_compute_min_max_w_h(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH,
@@ -738,17 +755,13 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 				
 				unsigned int bi = curWused_samples + sample;
 				
-				//if ( (curW >= low && curW < up) && (curH >= low && curH < up) ) {
-				//	printf("----- CUBE w/h: %i/%i ", curW, curH);
-					if ( _compute_and_set_z(&rz1, &rz2, &rz3, &bc, &bi, zBuffer) )  { continue; }
-					
-					if ( _compute_px_color(&curCol1, &bc, &weight1, &weight2, &weight3,
-									texture, v1c, v2c, v3c, v1t, v2t, v3t, &texId))
-					{
-						_set_color_to_fb_(frameBuffer,&bi ,&sample_factor,&curCol1);
-					}
-					//EO COLOR AND TEX
-				//}
+				if ( _compute_and_set_z(&rz1, &rz2, &rz3, &bc, &bi, zBuffer) )  { continue; }
+				
+				if ( _compute_px_color(&curCol1, &bc, &weight1, &weight2, &weight3,
+								texture, v1c, v2c, v3c, v1t, v2t, v3t, &texId))
+				{
+					_set_color_to_fb_(frameBuffer,&bi ,&sample_factor,&curCol1);
+				}
 			}
 		}
 	}
@@ -866,11 +879,7 @@ renderer_free(renderer_t * renderer){
 	free(renderer->frameBuffer);
 	free(renderer->zBuffer);
 	free(renderer->samples);
-	//free(renderer->wh_index);
 	texture_cache_free(&renderer->texture_cache);
-	//if (renderer->texture != NULL) {
-	//	texture_free(renderer->texture);
-	//}
 	free(renderer);
 }
 
