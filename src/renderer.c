@@ -3,22 +3,6 @@
 #include "renderer.h"
 
 
-	/*typedef struct {
-	vec3_t ndc;
-	vec3_t raster;
-} vertex_render_info_t;
-
-typedef struct {
-	vec3_t vec;
-	cRGB_t color;
-	vec2_t texCoord;
-	vertex_render_info_t info;
-} vertex_t;*/
-static void _write_vertex_info( vertex_t *vertex, vec3_t *raster, vec3_t *ndc ) {
-	vec3_copy_dest(&vertex->info.raster, raster);
-	vec3_copy_dest(&vertex->info.ndc, ndc);
-}
-
 static void _set_color_to_fb_(cRGB_t * frameBuffer,
 							  const unsigned int * bi , 
 							  const float * sample_factor,
@@ -33,7 +17,7 @@ static void _set_color_to_fb_(cRGB_t * frameBuffer,
 static bool _compute_px_color(cRGB_t * color, 
 							  const barycentric_t *bc, 
 							  const float * weight1, const float * weight2, const float * weight3,
-							  const texture_t * texture, const unsigned int * imgW,
+							  const texture_t * texture,
 							  const cRGB_t * v1c, const cRGB_t * v2c, const cRGB_t * v3c,
 							  const vec2_t * v1t, const vec2_t * v2t, const vec2_t * v3t,
 							  const int *texId) {
@@ -163,9 +147,7 @@ static bool _compute_sample_bc_and_check_line(vec3_t * _pixelSample, const vec2_
 		/*(1)*/
 		bc->bc0 = len2 / len;
 		bc->bc1 = (len-len2) / len;
-		
-
-	
+			
 		/*(2)
 		bc->bc0 = len;
 		bc->bc1 = len2;
@@ -405,7 +387,6 @@ static void render_line_in_line_mode(renderer_t * _renderer, const shape_t *  sh
 	const vertex_t * v1 = (const vertex_t *)vertices[0]; 
 	const vertex_t * v2 = (const vertex_t *)vertices[1];
 	const cRGB_t * v1c = &v1->color;
-	const unsigned int imgW = renderer->imgWidth, imgH = renderer->imgHeight;
 	const float imgW_h = renderer->imgWidth_half, imgH_h = renderer->imgHeight_half;
 	vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
 		   pNDC2 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2;
@@ -431,6 +412,80 @@ static void render_line_in_line_mode(renderer_t * _renderer, const shape_t *  sh
 	_draw_2D_line_to_renderer(renderer, &start, &end, v1c);
 }
 
+typedef struct {
+	vec3_t *pRaster1; 
+	vec3_t *pRaster2;
+	renderer_t * renderer;
+	const cRGB_t * color;
+	float *rz1;
+	float *rz2;
+	unsigned int cntDeltaVecs;
+	vec2_t *deltaVecs;
+} renderer_3d_line_ctx_t;
+
+static void _3d_line_to_framebuffer(int32_t const * const x, int32_t const * const y, void *data) 
+{
+	renderer_3d_line_ctx_t* ctx = (renderer_3d_line_ctx_t*)data;
+	renderer_t *renderer = ctx->renderer;
+
+	const unsigned int _x = (const unsigned int)*x;
+	const unsigned int _y = (const unsigned int)*y;
+
+	if ( _x >= (unsigned int)(renderer->imgWidth - 1) || _y >= (unsigned int)(renderer->imgHeight - 1) ) return;
+
+	const vec2_t * samples = renderer->samples;
+	const vec2_t * cursample;
+	const unsigned int used_samples = renderer->used_samples;
+	const float *sample_factor = &renderer->sample_factor;
+	const int bufWidth = renderer->bufWidth;
+
+	vec3_t pixelSample;
+	vec3_t *pRaster1 = ctx->pRaster1;
+	vec3_t *pRaster2 = ctx->pRaster2;
+	barycentric_t bc;
+	float *rz1 = ctx->rz1;
+	float *rz2 = ctx->rz2;
+
+	float * zBuffer = renderer->zBuffer;
+	cRGB_t * frameBuffer = renderer->frameBuffer;
+
+	const cRGB_t *color = ctx->color; 
+
+	for ( uint32_t curDeltaVec = 0; curDeltaVec < ctx->cntDeltaVecs; curDeltaVec++ )
+	{
+		vec2_t *deltaVec = &ctx->deltaVecs[curDeltaVec];
+		const unsigned int curH = _y + (unsigned int)deltaVec->y;
+		const unsigned int curW = _x + (unsigned int)deltaVec->x;
+
+		unsigned int curHbufWidth = curH * bufWidth;
+
+		cursample = samples;
+		unsigned int curWused_samples = curHbufWidth + (curW * used_samples); 
+		for (unsigned int sample = used_samples; sample--;) {
+
+			if ( _compute_sample_bc_and_check_line(&pixelSample, &cursample,&curW, &curH, &bc,
+										pRaster1, pRaster2)) { continue; }
+			
+			unsigned int bi = curWused_samples + sample;
+			
+			if ( _compute_and_set_z_line(rz1, rz2, &bc, &bi, zBuffer) )  { continue; }
+
+			_set_color_to_fb_(frameBuffer,&bi ,sample_factor, color);
+		}
+	}
+
+}
+
+static void _draw_3D_line_to_renderer(renderer_t * _renderer, vec2_t *start, vec2_t* end, const cRGB_t * color,
+	float *rz1, float *rz2, vec3_t *pRaster1, vec3_t *pRaster2) 
+{
+	vec2_t deltaVecs[5] = { {0.f , 0.f}, {-1.f , 0.f}, {1.f , 0.f}, {0.f , 1.f}, {0.f , -1.f} };
+	renderer_3d_line_ctx_t ctx = { 
+		pRaster1, pRaster2, _renderer, color, rz1, rz2, 5, &deltaVecs[0]		
+	};
+	geometry_line(start, end, _3d_line_to_framebuffer, &ctx);
+}
+
 static void render_line(renderer_t * _renderer, const shape_t * shape){
 	//VARS
 	renderer_t * renderer = _renderer;
@@ -440,24 +495,15 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 	const vertex_t * v1 = (const vertex_t *)vertices[0]; 
 	const vertex_t * v2 = (const vertex_t *)vertices[1];
 	const cRGB_t * v1c = &v1->color;
-	const vec2_t * samples = renderer->samples;
-	const vec2_t * cursample;
-	const int bufWidth = renderer->bufWidth;
-	const unsigned int imgW = renderer->imgWidth, imgH = renderer->imgHeight, used_samples = renderer->used_samples;
-	const float imgW_h = renderer->imgWidth_half, imgH_h = renderer->imgHeight_half, sample_factor = renderer->sample_factor;
+	const unsigned int imgW = renderer->imgWidth, imgH = renderer->imgHeight;
+	const float imgW_h = renderer->imgWidth_half, imgH_h = renderer->imgHeight_half;
 	vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
-		   pNDC2 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2, pixelSample;
-	cRGB_t * frameBuffer = renderer->frameBuffer;
+		   pNDC2 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2;
 	unsigned int curW, curH;
 	float maxx, maxy, minx, miny, 
 		  weight1 = ct->_44, 
 		  weight2 = ct->_44, 
 		  rz1, rz2;
-	barycentric_t bc;
-	float * zBuffer = renderer->zBuffer;
-
-
-	//const vec3_t * v1v =  &v1->vec, * v2v =  &v2->vec;
 
 	vec3_t _v1v, _v2v;
 	const vec3_t * v1v = &_v1v, * v2v = &_v2v;
@@ -468,32 +514,13 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 	_world_to_raster_line(v1v, &pNDC1,  &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct);
 	_world_to_raster_line(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct);
 
-	_write_vertex_info((vertex_t *)v1,  &pRaster1, &pNDC1 );
-	_write_vertex_info((vertex_t *)v2,  &pRaster2, &pNDC2 );
-
 	_compute_min_max_w_h_line(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH, &pRaster1, &pRaster2);
 	
-	for(; curH < maxy; ++curH) {
-		unsigned int curHbufWidth = curH * bufWidth;
-		for(curW = minx; curW < maxx; ++curW) {
-			cursample = samples;
-			unsigned int curWused_samples = curHbufWidth + (curW * used_samples); 
-			for (unsigned int sample = used_samples; sample--;) {
+	vec2_t start = { pRaster1.x, pRaster1.y };
+	vec2_t end = { pRaster2.x, pRaster2.y };
 
-				if ( _compute_sample_bc_and_check_line(&pixelSample, &cursample,&curW, &curH, &bc,
-										 &pRaster1, &pRaster2)) { continue; }
-				
-				unsigned int bi = curWused_samples + sample;
-				
-				if ( _compute_and_set_z_line(&rz1, &rz2, &bc, &bi, zBuffer) )  { continue; }
-
-				_set_color_to_fb_(frameBuffer,&bi ,&sample_factor,v1c);
-
-			}
-		}
-	}
+	_draw_3D_line_to_renderer(renderer, &start, &end, v1c, &rz1, &rz2, &pRaster1, &pRaster2);
 }
-
 
 #if 0
 	/**
@@ -613,8 +640,6 @@ static void render_point(renderer_t * renderer, const shape_t * shape){
 	//EO VARS
 	if (_world_to_raster(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct)) return;
 
-	_write_vertex_info((vertex_t *)v1,  &pRaster1, &pNDC1 );
-
 	maxx = 1.f; maxy = 1.f; minx = 0.f; miny = 0.f;
 	curH = miny; curW = minx;
 	//EO BOUNDING BOX
@@ -646,13 +671,12 @@ static void render_triangle_in_point_mode(renderer_t *  renderer, const shape_t 
 	const vec3_t *  v1v = &v1->vec,* v2v = &v2->vec,* v3v = &v3->vec;
 	const cRGB_t *  v1c = &v1->color, * v2c = &v2->color, * v3c = &v3->color;
 	const int bufWidth = renderer->bufWidth;
-	const unsigned int imgW = renderer->imgWidth, imgH = renderer->imgHeight, used_samples = renderer->used_samples;
+	const unsigned int used_samples = renderer->used_samples;
 	const float imgW_h = renderer->imgWidth_half, imgH_h = renderer->imgHeight_half;
 	vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
 		   pNDC2 = {ct->_14, ct->_24, ct->_34}, 
 		   pNDC3 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2, pRaster3;
 	cRGB_t *  frameBuffer = renderer->frameBuffer;
-	float *  zBuffer = renderer->zBuffer;
 	float weight1 = ct->_44, 
 		  weight2 = ct->_44, 
 		  weight3 = ct->_44, rz1, rz2, rz3, factor = 1.f;
@@ -700,7 +724,6 @@ static void render_triangle_in_line_mode(renderer_t *  renderer, const shape_t *
 	const vertex_t *  v3 = (const vertex_t *)vertices[2];
 	const vec3_t *  v1v = &v1->vec,* v2v = &v2->vec,* v3v = &v3->vec;
 	const cRGB_t *  v1c = &v1->color, * v2c = &v2->color, * v3c = &v3->color;
-	const unsigned int imgW = renderer->imgWidth, imgH = renderer->imgHeight;
 	const float imgW_h = renderer->imgWidth_half, imgH_h = renderer->imgHeight_half;
 	vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
 		   pNDC2 = {ct->_14, ct->_24, ct->_34}, 
@@ -767,11 +790,6 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 	if (_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct)) return; 
 	if (_world_to_raster(v3v, &pNDC3, &pRaster3, &weight3, &imgW_h, &imgH_h, &rz3, ct)) return; 
 
-	/*
-	_write_vertex_info((vertex_t *)v1,  &pRaster1, &pNDC1 );
-	_write_vertex_info((vertex_t *)v2,  &pRaster2, &pNDC2 );
-	_write_vertex_info((vertex_t *)v3,  &pRaster3, &pNDC3 );
-    */
 	bc.area = 1.f/((pRaster3.x - pRaster1.x) * (pRaster2.y - pRaster1.y) - (pRaster3.y - pRaster1.y) * (pRaster2.x - pRaster1.x));
 
 	_compute_min_max_w_h(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH,
@@ -794,10 +812,10 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 				
 				//if ( (curW >= low && curW < up) && (curH >= low && curH < up) ) {
 				//	printf("----- CUBE w/h: %i/%i ", curW, curH);
-					if ( _compute_and_set_z(&rz1, &rz2, &rz3,&bc, &bi, zBuffer) )  { continue; }
+					if ( _compute_and_set_z(&rz1, &rz2, &rz3, &bc, &bi, zBuffer) )  { continue; }
 					
 					if ( _compute_px_color(&curCol1, &bc, &weight1, &weight2, &weight3,
-									texture, &imgW, v1c, v2c, v3c, v1t, v2t, v3t, &texId))
+									texture, v1c, v2c, v3c, v1t, v2t, v3t, &texId))
 					{
 						_set_color_to_fb_(frameBuffer,&bi ,&sample_factor,&curCol1);
 					}
