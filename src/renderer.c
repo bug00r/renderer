@@ -589,6 +589,21 @@ static void render_point(renderer_t * renderer, const shape_t * shape){
 	}
 }
 
+static bool __r_triangle_is_backface(vec3_t *pNDC1, vec3_t *pNDC2, vec3_t *pNDC3)
+{
+	vec3_t pNDC2_1;
+	vec3_sub_dest(&pNDC2_1, pNDC2, pNDC1);
+	vec3_t pNDC3_1;
+	vec3_sub_dest(&pNDC3_1, pNDC3, pNDC1);
+	
+
+	vec3_t normal;
+	vec3_cross_dest(&normal, &pNDC2_1, &pNDC3_1);
+	
+	if ( normal.z < 0.f ) return true;
+	return false;
+}
+
 static void render_triangle_in_point_mode(renderer_t *  renderer, const shape_t *  shape) {
 	const camera_t *  cam = &renderer->camera;
 	const mat4_t *  ct = &cam->transformation;
@@ -614,6 +629,8 @@ static void render_triangle_in_point_mode(renderer_t *  renderer, const shape_t 
 	if (_world_to_raster(v1v, &pNDC1, &pRaster1, &weight1, &imgW_h, &imgH_h, &rz1, ct)) return; 
 	if (_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct)) return; 
 	if (_world_to_raster(v3v, &pNDC3, &pRaster3, &weight3, &imgW_h, &imgH_h, &rz3, ct)) return; 
+
+	if (__r_triangle_is_backface(&pNDC1, &pNDC2, &pNDC3)) return;
 
 	bool is1in = (pRaster1.x < renderer->imgWidth) && (pRaster1.x >= 0) && (pRaster1.y < renderer->imgHeight) && (pRaster1.y >= 0 );
 	bool is2in = (pRaster2.x < renderer->imgWidth) && (pRaster2.x >= 0) && (pRaster2.y < renderer->imgHeight) && (pRaster2.y >= 0 );
@@ -666,6 +683,8 @@ static void render_triangle_in_line_mode(renderer_t *  renderer, const shape_t *
 	if (_world_to_raster(v2v, &pNDC2, &pRaster2, &weight2, &imgW_h, &imgH_h, &rz2, ct)) return; 
 	if (_world_to_raster(v3v, &pNDC3, &pRaster3, &weight3, &imgW_h, &imgH_h, &rz3, ct)) return; 
 
+	if (__r_triangle_is_backface(&pNDC1, &pNDC2, &pNDC3)) return;
+
 	vec2_t start = { pRaster1.x, pRaster1.y };
 	vec2_t end = { pRaster2.x, pRaster2.y };
 
@@ -680,21 +699,6 @@ static void render_triangle_in_line_mode(renderer_t *  renderer, const shape_t *
 	end = (vec2_t){ pRaster1.x, pRaster1.y };
 
 	_draw_2D_line_to_renderer(renderer, &start, &end, v3c);
-}
-
-static bool __r_triangle_is_backface(vec3_t *pNDC1, vec3_t *pNDC2, vec3_t *pNDC3)
-{
-	vec3_t pNDC2_1;
-	vec3_sub_dest(&pNDC2_1, pNDC2, pNDC1);
-	vec3_t pNDC3_1;
-	vec3_sub_dest(&pNDC3_1, pNDC3, pNDC1);
-	
-
-	vec3_t normal;
-	vec3_cross_dest(&normal, &pNDC2_1, &pNDC3_1);
-	
-	if ( normal.z < 0.f ) return true;
-	return false;
 }
 
 static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
