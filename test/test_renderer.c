@@ -23,7 +23,7 @@ char * create_string(const char * msg, ...) {
 #endif
 #include "test_include_renderer.c"
 #include "test_include_renderer_creation.c"
-#include "test_include_add_bkgrnd.c"
+/*#include "test_include_add_bkgrnd.c"
 #include "test_include_points.c"
 #include "test_include_lines.c"
 #include "test_include_triangle.c"
@@ -35,7 +35,7 @@ char * create_string(const char * msg, ...) {
 #include "test_include_cylinder.c"
 #include "test_include_cone.c"
 #include "test_include_square_block.c"
-
+*/
 static float place_of_vec3_z(const vec3_t *  s, const vec3_t *  e, const vec3_t *  p) {
 	return (p->z - s->z) * (e->x - s->x) - (p->x - s->x) * (e->z - s->z);
 }
@@ -147,18 +147,18 @@ static void test_frustum() {
 
 	int width		= 512;
 	int height		= 512;
-	vec3_t from 	= { 0.f, 0.f, 1.f };
+	vec3_t from 	= { 0.f, 0.f, 2.f };
 	vec3_t to 		= { 0.f, 0.f, 0.f };
 	cRGB_t bgcolor	= { 0.f, 0.f, 0.f };
 	unsigned int samplestep = 1;
 	float zoom 		= 1.f;
-	float view 		= 4.f;
+	float view 		= 1.f;
 	float left 		= -view;
 	float right 	= view;
 	float bottom 	= -view;
 	float top 		= view;
-	float near		= .3f;
-	float far		= 6.f;
+	float near		= 1.f;
+	float far		= 3.f;
 	renderer_t * renderer = create_renderer_perspective( width, height, &from, &to, zoom, left, right, top, bottom, near, far, &bgcolor, samplestep);
 
 	print_camera(&renderer->camera);

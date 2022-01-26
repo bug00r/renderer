@@ -787,7 +787,131 @@ void render_shape(renderer_t *  renderer, const shape_t *  shape){
 	}
 }
 
+/*
+
+	p = (xmin,ymin,zmin)
+	if (normal.x >= 0)
+		p.x = xmax;
+	if (normal.y >=0))
+		p.y = ymax;
+	if (normal.z >= 0)
+		p.z = zmax:
+
+The negative vertex n follows the opposite rule:
+
+
+	n = (xmax,ymax,zmax)
+	if (normal.x >= 0)
+		n.x = xmin;
+	if (normal.y >=0))
+		n.y = ymin;
+	if (normal.z >= 0)
+		n.z = zmin:
+
+
+*/
+
+static void __r_update_pVertex(vec3_t* _pVertex, vec3_t *_normal, bbox_t *_bbox)
+{
+	vec3_t* pVertex = _pVertex;
+	vec3_t *normal = _normal;
+	bbox_t *bbox = _bbox;
+
+	pVertex->x = ( normal->x >= 0.f ? bbox->max.x : bbox->min.x );
+	pVertex->x = ( normal->y >= 0.f ? bbox->max.y : bbox->min.y );
+	pVertex->x = ( normal->z >= 0.f ? bbox->max.z : bbox->min.z );
+}
+
+static void __r_update_nVertex(vec3_t* _nVertex, vec3_t *_normal, bbox_t *_bbox)
+{
+	vec3_t* nVertex = _nVertex;
+	vec3_t *normal = _normal;
+	bbox_t *bbox = _bbox;
+
+	nVertex->x = ( normal->x >= 0.f ? bbox->min.x : bbox->max.x );
+	nVertex->x = ( normal->y >= 0.f ? bbox->min.y : bbox->max.y );
+	nVertex->x = ( normal->z >= 0.f ? bbox->min.z : bbox->max.z );
+}
+
+static int __r_check_plate_frustum(plane_t* _plane, bbox_t *_bbox)
+{
+	bbox_t *bbox = _bbox;
+	plane_t* plane = _plane;
+	
+	uint32_t cntOutside = 0;
+	
+	vec3_t pVertex, nVertex;
+	__r_update_nVertex(&nVertex, &plane->normal, bbox);
+	__r_update_pVertex(&pVertex, &plane->normal, bbox);
+	
+	cntOutside += (mu_point_plane_distance_normal(&nVertex, &plane->lb, &plane->normal) < 0.f ? 1 : 0);
+	cntOutside += (mu_point_plane_distance_normal(&pVertex, &plane->lb, &plane->normal) < 0.f ? 1 : 0);
+	
+	return cntOutside;
+}
+
+static void __r_frustum_as_vec3_array(vec3_t **_array, plane_t* _nearPlane, plane_t* _farPlane)
+{
+	vec3_t **array = _array;
+	plane_t* nearPlane = _nearPlane;
+	plane_t* farPlane = _farPlane;
+
+	array[0] = &nearPlane->lb;
+	array[1] = &nearPlane->rb;
+	array[2] = &nearPlane->lt;
+	array[3] = &nearPlane->rt;
+	array[4] = &farPlane->lb;
+	array[5] = &farPlane->rb;
+	array[6] = &farPlane->lt;
+	array[7] = &farPlane->rt;
+}
+
+static bool __r_bbox_in_frustum(frustum_t *_frustum, bbox_t *_bbox)
+{
+	frustum_t *frustum = _frustum;
+	bbox_t *bbox = _bbox;
+
+	uint32_t out = 0;
+
+	/**
+	 *  ref: https://cgvr.informatik.uni-bremen.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
+	 * 
+	 * 	Topic: Geometric Approach - Testing Boxes II 
+	 * 
+	 */ 
+	out += __r_check_plate_frustum(&frustum->bottom, bbox);
+	out += __r_check_plate_frustum(&frustum->top, bbox);
+	out += __r_check_plate_frustum(&frustum->far, bbox);
+	out += __r_check_plate_frustum(&frustum->near, bbox);
+	out += __r_check_plate_frustum(&frustum->left, bbox);
+	out += __r_check_plate_frustum(&frustum->right, bbox);
+
+	if (out == 12) return false;
+
+	/**
+	 * 	ref: https://www.iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm
+	 * 
+	 * */
+	vec3_t*vecs[8];
+	__r_frustum_as_vec3_array(&vecs[0], &frustum->near, &frustum->far);
+
+	out = 0;
+    out=0; for( int i=0; i<8; i++ ) out += ((vecs[i]->x > bbox->max.x)?1:0); if( out==8 ) return false;
+    out=0; for( int i=0; i<8; i++ ) out += ((vecs[i]->x < bbox->min.x)?1:0); if( out==8 ) return false;
+    out=0; for( int i=0; i<8; i++ ) out += ((vecs[i]->y > bbox->max.y)?1:0); if( out==8 ) return false;
+    out=0; for( int i=0; i<8; i++ ) out += ((vecs[i]->y < bbox->min.y)?1:0); if( out==8 ) return false;
+    out=0; for( int i=0; i<8; i++ ) out += ((vecs[i]->z > bbox->max.z)?1:0); if( out==8 ) return false;
+    out=0; for( int i=0; i<8; i++ ) out += ((vecs[i]->z < bbox->min.z)?1:0); if( out==8 ) return false;	
+
+	return true;
+}
+
 void render_mesh(renderer_t * renderer, const mesh_t *  mesh){
+	bbox_t * bbox = (bbox_t*)&mesh->bbox;
+	if ( bbox->created  )
+	{
+		if ( !__r_bbox_in_frustum(&renderer->camera.frustum, bbox) ) return;
+	}
 	shape_t ** shapes = mesh->shapes;
 	for(unsigned int cntShape = mesh->cntShapes; cntShape-- ;) {		
 		render_shape(renderer, *shapes);
