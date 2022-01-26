@@ -147,12 +147,12 @@ static void test_frustum() {
 
 	int width		= 512;
 	int height		= 512;
-	vec3_t from 	= { 0.f, 0.f, 2.f };
+	vec3_t from 	= { 0.f, 2.f, 2.f };
 	vec3_t to 		= { 0.f, 0.f, 0.f };
 	cRGB_t bgcolor	= { 0.f, 0.f, 0.f };
 	unsigned int samplestep = 1;
 	float zoom 		= 1.f;
-	float view 		= 1.f;
+	float view 		= .5f;
 	float left 		= -view;
 	float right 	= view;
 	float bottom 	= -view;

@@ -43,6 +43,122 @@ static void __calc_normal(plane_t *plane) {
 	vec3_normalize(&p->normal);
 }
 
+static void __calc_frustum_NEW(camera_t *  camera) {
+	camera_t *cam = camera;
+	frustum_t *frustum = &cam->frustum;
+	plane_t *near = &frustum->near;
+	plane_t *far = &frustum->far;
+	plane_t *left = &frustum->left;
+	plane_t *right = &frustum->right;
+	plane_t *top = &frustum->top;
+	plane_t *bottom = &frustum->bottom;
+
+	vec3_t tmp;
+	vec3_t tmp2;
+
+	vec3_t centerNear;
+	vec3_negate_dest(&centerNear, &cam->forward);
+	vec3_mul_dest(&tmp, &centerNear, cam->n);
+	vec3_add_dest(&centerNear, &cam->from, &tmp);
+
+	vec3_t nearUpDir;
+	vec3_mul_dest(&nearUpDir, &cam->up, cam->t);
+
+	vec3_t nearDownDir;
+	vec3_negate_dest(&nearDownDir, &nearUpDir);
+
+	vec3_t nearTopRight;
+	vec3_mul_dest(&tmp, &cam->left, cam->r); //cam->left means right :D..don't ask yet :P
+	vec3_add_n_dest(&nearTopRight, 3,&centerNear, &nearUpDir, &tmp);
+	
+	vec3_t nearTopLeft;
+	vec3_negate_dest(&tmp2, &tmp);
+	vec3_add_n_dest(&nearTopLeft, 3, &centerNear, &nearUpDir, &tmp2);
+
+	vec3_t nearBottomRight;
+	vec3_mul_dest(&tmp, &cam->left, cam->r); //cam->left means right :D..don't ask yet :P
+	vec3_add_n_dest(&nearBottomRight, 3, &centerNear, &nearDownDir, &tmp);
+
+	vec3_t nearBottomLeft;
+	vec3_negate_dest(&tmp2, &tmp);
+	vec3_add_n_dest(&nearBottomLeft, 3, &centerNear, &nearDownDir, &tmp2);
+
+	//near plane ready
+	vec3_copy_dest(&near->lb, &nearBottomRight);
+	vec3_copy_dest(&near->rb, &nearBottomLeft);
+	vec3_copy_dest(&near->lt, &nearTopRight);
+	vec3_copy_dest(&near->rt, &nearTopLeft);
+
+	float farFactor = cam->f / cam->n;
+
+	vec3_t centerFar;
+	vec3_negate_dest(&centerFar, &cam->forward);
+	vec3_mul_dest(&tmp, &centerFar, cam->f);
+	vec3_add_dest(&centerFar, &cam->from, &tmp);
+
+	vec3_t farUpDir;
+	vec3_mul_dest(&farUpDir, &cam->up, cam->t * farFactor);
+
+	vec3_t farDownDir;
+	vec3_negate_dest(&farDownDir, &farUpDir);
+
+	vec3_t farTopRight;
+	vec3_mul_dest(&tmp, &cam->left, cam->r * farFactor); //cam->left means right :D..don't ask yet :P
+	vec3_add_n_dest(&farTopRight, 3,&centerFar, &farUpDir, &tmp);
+	
+	vec3_t farTopLeft;
+	vec3_negate_dest(&tmp2, &tmp);
+	vec3_add_n_dest(&farTopLeft, 3, &centerFar, &farUpDir, &tmp2);
+
+	vec3_t farBottomRight;
+	vec3_mul_dest(&tmp, &cam->left, cam->r * farFactor); //cam->left means right :D..don't ask yet :P
+	vec3_add_n_dest(&farBottomRight, 3, &centerFar, &farDownDir, &tmp);
+
+	vec3_t farBottomLeft;
+	vec3_negate_dest(&tmp2, &tmp);
+	vec3_add_n_dest(&farBottomLeft, 3, &centerFar, &farDownDir, &tmp2);
+
+	//far plane ready
+	vec3_copy_dest(&far->lb, &farBottomLeft);
+	vec3_copy_dest(&far->rb, &farBottomRight);
+	vec3_copy_dest(&far->lt, &farTopLeft);
+	vec3_copy_dest(&far->rt, &farTopRight);
+
+		//set left plane
+	vec3_copy_dest(&left->lb, &near->rb);
+	vec3_copy_dest(&left->lt, &near->rt);
+	vec3_copy_dest(&left->rb, &far->lb);
+	vec3_copy_dest(&left->rt, &far->lt);
+
+	//set right plane
+	vec3_copy_dest(&right->lb, &far->rb);
+	vec3_copy_dest(&right->lt, &far->rt);
+	vec3_copy_dest(&right->rb, &near->lb);
+	vec3_copy_dest(&right->rt, &near->lt);
+
+	//set top plane
+	vec3_copy_dest(&top->lb, &far->lt);
+	vec3_copy_dest(&top->lt, &near->rt);
+	vec3_copy_dest(&top->rb, &far->rt);
+	vec3_copy_dest(&top->rt, &near->lt);
+
+	//set top plane
+	vec3_copy_dest(&bottom->lb, &near->rb);
+	vec3_copy_dest(&bottom->lt, &far->lb);
+	vec3_copy_dest(&bottom->rb, &near->lb);
+	vec3_copy_dest(&bottom->rt, &far->rb);
+
+	//normals are going to center of frustum
+	//near
+	__calc_normal(near);
+	__calc_normal(far);
+	__calc_normal(left);
+	__calc_normal(right);
+	__calc_normal(top);
+	__calc_normal(bottom);
+
+}
+
 static void __calc_frustum(camera_t *  camera) {
 	camera_t *cam = camera;
 	frustum_t *frustum = &cam->frustum;
@@ -122,7 +238,7 @@ static void __calc_frustum(camera_t *  camera) {
 	tmp.z = cam->from.z - cam->f; 
 	vec3_copy_dest(&far->lb, &tmp);
 
-	//rearrange far plan as look from behind for easier normal calculation
+	//set left plane
 	vec3_copy_dest(&left->lb, &near->rb);
 	vec3_copy_dest(&left->lt, &near->rt);
 	vec3_copy_dest(&left->rb, &far->lb);
