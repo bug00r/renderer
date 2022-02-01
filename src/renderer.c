@@ -932,7 +932,7 @@ void renderer_clear_frame(renderer_t * renderer){
 	const int buffersize = renderer->imgWidth * 
 						   renderer->imgHeight * 
 						   renderer->samplestep * renderer->samplestep;
-	memset(renderer->zBuffer, CHAR_MIN, buffersize * sizeof(float));
+	memset(renderer->zBuffer, 0.f, buffersize * sizeof(float));
 	memset(renderer->frameBuffer, 0, buffersize * sizeof(cRGB_t));
 	renderer->max_z = RENDER_FLT_MAX;
 	renderer->min_z = 0.f;

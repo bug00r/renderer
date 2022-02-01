@@ -1,6 +1,6 @@
 void test_render_test_scene(renderer_t * renderer, bool isperspective) {
 	//scene_t * scene = scene_create_test();
-	scene_t * scene = scene_create_test_all();
+	scene_t * scene = scene_create_test_all(2.f);
 	
 	render_scene(renderer, scene);
 	
@@ -12,6 +12,8 @@ void test_render_test_scene(renderer_t * renderer, bool isperspective) {
 		filename = create_string("build/_z__%u_testscene_%uxMSAA.ppm", isperspective, renderer->samplestep);
 		renderer_output_z_buffer_ppm(renderer, filename);
 		free(filename);
+	#else
+		(void)(isperspective);
 	#endif
 	renderer_clear_frame(renderer);
 	

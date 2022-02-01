@@ -15,7 +15,7 @@
 
 #include "vec.h"
 #include "mat.h"
-#include "utils_math.h"
+#include "utilsmath.h" 
 #include "geometry.h"
 #include "mesh.h"
 #include "scene.h"

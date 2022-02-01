@@ -18,6 +18,7 @@ void config_camera(camera_t *  camera, const vec3_t *  from, const vec3_t *  to,
 	createProjectionOrtho(curcam, l, r, t, b, near, far);
 	
 	mat4_mul_dest(&curcam->transformation ,&curcam->view, &curcam->projection);
+
 	//mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
 }
 
@@ -173,7 +174,7 @@ camera_lookAt(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
 
 	vec3_sub_dest(f, eye, to);
 	vec3_normalize(f);
-	
+
 	vec3_t tmp = { 0.f, 1.f, 0.f};
 	vec3_normalize(&tmp);
 	

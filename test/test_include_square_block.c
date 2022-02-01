@@ -16,6 +16,8 @@ void test_render_square_block(renderer_t * renderer, bool isperspective) {
 		filename = create_string("build/_z__%u_square_block_%uxMSAA.ppm", isperspective, renderer->samplestep);
 		renderer_output_z_buffer_ppm(renderer, filename);
 		free(filename);
+	#else
+		(void)(isperspective);
 	#endif
 	
 	#ifdef debug

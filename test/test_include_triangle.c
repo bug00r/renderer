@@ -14,6 +14,8 @@ void test_render_triangle(renderer_t * renderer, bool isperspective) {
 										isperspective, renderer->samplestep);
 		renderer_output_ppm(renderer, filename);
 		free(filename);
+	#else
+		(void)(isperspective);
 	#endif
 	free_mesh(triangle);
 }

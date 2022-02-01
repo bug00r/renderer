@@ -14,6 +14,8 @@ void test_render_cylinder(renderer_t * renderer, bool isperspective) {
 										isperspective, renderer->samplestep);
 		renderer_output_z_buffer_ppm(renderer, filename);
 		free(filename);
+	#else
+		(void)(isperspective);
 	#endif
 	
 	mat3_t * rotx_mat = create_rot_x_mat(-45.f);

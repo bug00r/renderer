@@ -49,46 +49,35 @@ CFLAGS+=-std=c11 -Wpedantic -pedantic-errors -Wall -Wextra $(debug)
 #-ggdb
 #-pg for profiling 
 
-LIB?=-L/c/dev/lib$(BIT_SUFFIX)
+LIBSDIR?=-L/c/dev/lib$(BIT_SUFFIX)
 INCLUDE?= -I/c/dev/include -I./include
 
-LIBNAME=librenderer.a
-OBJS=$(BUILDPATH)renderer.o $(BUILDPATH)camera.o
-SRC_DIR=src/
-SRC_FILES=camera renderer
-SRC=$(patsubst %,$(SRC_DIR)%.c,$(SRC_FILES))
+NAME=renderer
+LIBNAME=lib$(NAME).a
+LIB=$(BUILDPATH)$(LIBNAME)
+OBJS=$(BUILDPATH)$(NAME).o $(BUILDPATH)camera.o
 
 INCLUDEDIR= $(INCLUDE)
 
-TESTSRC=test/test_renderer.c
-TESTBIN=test_renderer.exe
-LIBS=-lscene -lmesh -lshape -ltexture -lnoise -lfractals -lgeometry -lcrgb_array -ldl_list -lfarray -larray -lcolor -lstatistics -lutilsmath -lmat -lvec
-TESTLIB=-lrenderer 
-LIBDIR=-L$(BUILDDIR) $(LIB)
+TESTBIN=$(BUILDPATH)test_$(NAME).exe
+LIBS=-l$(NAME) -lscene -lr_font -lmesh -lshape -ltexture -lnoise -lfractals -lgeometry -lcrgb_array -ldl_list -lfarray -larray -lcolor -lstatistics -lutilsmath -lmat -lvec
+LIBDIR=-L$(BUILDDIR) $(LIBSDIR)
 
-ifeq ($(isdebug),1)
-	INCLUDEDIR += -I./../collections/linked_list/
-	TESTLIBDIR += -L./../collections/linked_list/$(BUILDDIR)
-	TESTLIB += -llinked_list
-endif
+all: mkbuilddir $(LIB) $(TESTBIN)
 
-all: mkbuilddir $(BUILDPATH)$(LIBNAME)
+$(LIB): $(OBJS) 
+	$(AR) $(ARFLAGS) $@ $^
 
-$(BUILDPATH)$(LIBNAME): $(OBJS) 
-	$(AR) $(ARFLAGS) $(BUILDPATH)$(LIBNAME) $(OBJS)
-
-$(BUILDPATH)renderer.o: src/renderer.c
-	$(CC) $(CFLAGS) -c src/renderer.c -o $(BUILDPATH)renderer.o $(INCLUDEDIR)
-
-$(BUILDPATH)camera.o: src/camera.c
-	$(CC) $(CFLAGS) -c src/camera.c -o $(BUILDPATH)camera.o  $(INCLUDEDIR)
+$(OBJS): include/$(NAME).h include/camera.h
+	$(CC) $(CFLAGS) -c src/$(@F:.o=.c) -o $@ $(INCLUDEDIR)
 	
-$(BUILDPATH)$(TESTBIN):
-	$(CC) $(CFLAGS) $(TESTSRC) -o $(BUILDPATH)$(TESTBIN) $(INCLUDEDIR) $(LIBDIR) $(LIBDIR) $(TESTLIB) $(LIBS) 
+$(TESTBIN): $(LIB) test/font_provider_default.h
+	$(CC) $(CFLAGS) test/$(@F:.exe=.c) test/font_provider_default.c -o $@ $(INCLUDEDIR) $(LIBDIR) $(LIBS) 
 
 .PHONY: clean mkbuilddir test
 
-test: mkbuilddir $(BUILDPATH)$(LIBNAME) $(BUILDPATH)$(TESTBIN)
+test:
+	./$(TESTBIN)
 
 mkbuilddir:
 	mkdir -p $(BUILDDIR)
@@ -99,6 +88,6 @@ clean:
 install:
 	mkdir -p $(INSTALL_ROOT)include
 	mkdir -p $(INSTALL_ROOT)lib$(BIT_SUFFIX)
-	cp ./include/renderer.h $(INSTALL_ROOT)include/renderer.h
-	cp ./include/camera.h $(INSTALL_ROOT)include/camera.h
-	cp $(BUILDPATH)$(LIBNAME) $(INSTALL_ROOT)lib$(BIT_SUFFIX)/$(LIBNAME)
+	cp ./include/$(NAME).h $(INSTALL_ROOT)include$(PATHSEP)$(NAME).h
+	cp ./include/camera.h $(INSTALL_ROOT)include$(PATHSEP)camera.h
+	cp $(LIB) $(INSTALL_ROOT)lib$(BIT_SUFFIX)$(PATHSEP)$(LIBNAME)

@@ -23,6 +23,8 @@ void test_render_lines(renderer_t * renderer, bool isperspective) {
 		filename = create_string("build/_z__%u_line_%uxMSAA.ppm", isperspective, renderer->samplestep);
 		renderer_output_z_buffer_ppm(renderer, filename);
 		free(filename);
+	#else
+		(void)(isperspective);
 	#endif
 	
 	free_mesh(line);

@@ -19,7 +19,6 @@ void test_renderer_creation() {
 	assert(renderer->frameBuffer[buffsize-1].g == 0.25f);
 	assert(renderer->frameBuffer[buffsize-1].b == 0.125f);
 	
-	assert(renderer->zBuffer[buffsize-1] == RENDER_FLT_MAX);
 	assert(renderer->zBuffer[buffsize-2] == zbuffervalue);
 	
 	assert(renderer->imgWidth == w);

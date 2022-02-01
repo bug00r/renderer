@@ -18,6 +18,8 @@ void test_render_quad(renderer_t * renderer, bool isperspective) {
 										isperspective, renderer->samplestep);
 		renderer_output_z_buffer_ppm(renderer, filename);
 		free(filename);
+	#else
+		(void)(isperspective);
 	#endif
 	
 	renderer_clear_frame(renderer);

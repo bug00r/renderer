@@ -16,12 +16,11 @@ void test_render_texture_cube(unsigned int samplestep) {
 	
 	cRGB_t bgcolor = {0.f, 0.0f, 0.f};
 	renderer_t * renderer_active_tex = renderer_new(w_, h_, &bgcolor, samplestep);
-	int bufsize = w_*h_*sizeof(cRGB_t);
-	renderer_active_tex->texture = malloc(bufsize);
-	memcpy(renderer_active_tex->texture, texture_fractals->buffer->entries, bufsize);
     
+	int texId = texture_cache_register(renderer_active_tex->texture_cache, texture_fractals);
+	(void)(texId);
+
 	mandelbrot_free(mb);
-	texture_free(texture_fractals);
 	
 	vec3_t _from = { 0.5f, 0.34f, 1.f };
 	vec3_t _to = { 0.0f, 0.0f, 0.0f };
@@ -42,6 +41,8 @@ void test_render_texture_cube(unsigned int samplestep) {
 		filename = create_string("build/_z__%u_texture_cube_%uxMSAA.ppm", isperspective, renderer_active_tex->samplestep);
 		renderer_output_z_buffer_ppm(renderer_active_tex, filename);
 		free(filename);
+	#else
+		(void)(isperspective);
 	#endif
 
 	free_scene(texscene);	
@@ -72,12 +73,11 @@ void test_render_texture_cube_perspective(unsigned int samplestep) {
 	cRGB_t bgcolor = {0.f, 0.0f, 0.f};
 	renderer_t * renderer_active_tex = renderer_new(w_, h_, &bgcolor, samplestep);
 	renderer_active_tex->projection = RP_PERSPECTIVE;
-	int bufsize = w_*h_*sizeof(cRGB_t);
-	renderer_active_tex->texture = malloc(bufsize);
-	memcpy(renderer_active_tex->texture, texture_fractals->buffer->entries, bufsize);
+
+	int texId = texture_cache_register(renderer_active_tex->texture_cache, texture_fractals);
+	(void)(texId);
     
 	mandelbrot_free(mb);
-	texture_free(texture_fractals);
 	
 	vec3_t _from = { 0.17f, 0.27f, .2f };
 	vec3_t _to = { 0.0f, 0.0f, 0.0f };
@@ -98,6 +98,8 @@ void test_render_texture_cube_perspective(unsigned int samplestep) {
 		filename = create_string("build/_z__%u_texture_cube_%uxMSAA.ppm", isperspective, renderer_active_tex->samplestep);
 		renderer_output_z_buffer_ppm(renderer_active_tex, filename);
 		free(filename);
+	#else
+		(void)(isperspective);
 	#endif
 
 	free_scene(texscene);	
