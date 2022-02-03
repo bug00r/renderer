@@ -358,10 +358,13 @@ static void _3d_line_to_framebuffer(int32_t const * const x, int32_t const * con
 	renderer_3d_line_ctx_t* ctx = (renderer_3d_line_ctx_t*)data;
 	renderer_t *renderer = ctx->renderer;
 
+	const unsigned int limitW = (unsigned int)(renderer->imgWidth - 1);
+	const unsigned int limitH = (unsigned int)(renderer->imgHeight - 1);
+
 	const unsigned int _x = (const unsigned int)*x;
 	const unsigned int _y = (const unsigned int)*y;
 
-	if ( _x >= (unsigned int)(renderer->imgWidth - 1) || _y >= (unsigned int)(renderer->imgHeight - 1) ) return;
+	if ( _x > limitW || _y > limitH ) return;
 
 	const vec2_t * samples = renderer->samples;
 	const vec2_t * cursample;
@@ -390,6 +393,8 @@ static void _3d_line_to_framebuffer(int32_t const * const x, int32_t const * con
 		const vec2_t *deltaVec = &ctx->deltaVecs[curDeltaVec];
 		const unsigned int curH = _y + (unsigned int)deltaVec->y;
 		const unsigned int curW = _x + (unsigned int)deltaVec->x;
+
+		if ( curW > limitW || curH > limitH ) continue;
 
 		unsigned int curHbufWidth = curH * bufWidth;
 
