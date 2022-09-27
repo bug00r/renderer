@@ -1,25 +1,48 @@
+GLOBAL REFACTORING for V2:
+	- changing render interface from shape_t, mesh_t or scene_t to vertex_t and float array primitives.
+			- vertex_t interface for easier Object Rendering
+			- float arrays for more flexible Object Rendering
+	  
+	  An important Reason is the flexibility of Renderable Objects. There is a need for external evaluation and management of
+	  	- Changing colors
+		- displaying Bounding box
+		- changing textures o the fly.
+		- ... and many more 
+	  
+	  The Renderer should only shade geometric Coordinates. Any other Mechanism like Texture Management, Object States are handled
+	  by an external Engine. This is the Main reason for Changing Things.
+	
+	- this Project will only be responsible for rendering and another project will be adapt the simple Object Interface in Reason
+	  of backward compatibility. No Name examined for this Project for now, maybe simple_render_engine or br_engine(bug0rs render Engine)
+	
+
 TODO:
 	- performance improvement
 		- based on the ideas below we could add Rendering Parameter to the Shape object for different processing
 		- the scanline algorithm without depth buffer could be used to realize HUD or UI Interfaces
-	    - For 2D / 3D Wireframe there could be used the Bresham algorithm
+	    - For 2D / 3D Wireframe there could be used the Bresenham algorithm
 			- 2D we are ignoring depth buffer only examining rasterpixel
-			- 3D we are using bresham to identify pixel for processing and 
+			- 3D we are using bresenham to identify pixel for processing and 
 			  then going through regular rendering
 		- instead of min max calculation use scanline algorithm.
 			- should be optimized in vertical or horizontal scanning, based on smallest amount of delta x and delta  y 
 			- on lines only took intersection point +- 1 with min max of raster plate
-				- exclide n*m - (ca.)sqrt(n*n + m*m) - O(intersection func)
+				- exclude n*m - (ca.)sqrt(n*n + m*m) - O(intersection func)
 			- on triangles calc two intersection point and sort them begin on minx - 1 up to maxx + 1
 				- exclude half of pixel*vpixel - O(intersection func)
 	- create diagramm API
 		- create axis a scene
 		- create label vector as scene for easier extraction
-	- simple polygon triangulation, based on self made algorithm
-		- testing if this could work with simple font polygons
-	- adding font rendering:
-		- build in basic selfmade font
-		- loading true type fonts (it would be nice not using freetype lib)
+
+
+DONE:
+
+- simple polygon triangulation, based on self made algorithm
+	- testing if this could work with simple font polygons
+- adding font rendering:
+	- build in basic selfmade font
+	- loading true type fonts (it would be nice not using freetype lib)
+
 
 ISSUES:
 
