@@ -943,7 +943,7 @@ void renderer_clear_frame(renderer_t * renderer){
 	renderer->min_z = 0.f;
 }
 
-
+// EXOPORTED TO RASTERIZER
 void renderer_set_vmode_solid(renderer_t * renderer) {
 	renderer->POINT_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_point;
 	renderer->LINE_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_line;
@@ -961,6 +961,7 @@ void renderer_set_vmode_line(renderer_t * renderer) {
 	renderer->LINE_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_line_in_line_mode;
 	renderer->TRIANGLE_RENDER_FUNC 	= (RENDERER_RENDER_FUNC)render_triangle_in_line_mode;
 }
+// EOF EXPORTED TO RASTERIZER
 
 renderer_t * 
 renderer_new(int imgWidth, int imgHeight, cRGB_t * bgColor, unsigned int samplestep){

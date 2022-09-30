@@ -23,6 +23,8 @@
 #include "texture.h"
 #include "texture_cache.h"
 
+#include "rasterizer.h"
+
 #define RENDER_FLT_MAX 339615136492207130000000000000000000000.000000
 
 typedef enum {

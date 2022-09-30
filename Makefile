@@ -55,7 +55,7 @@ INCLUDE?= -I/c/dev/include -I./include
 NAME=renderer
 LIBNAME=lib$(NAME).a
 LIB=$(BUILDPATH)$(LIBNAME)
-OBJS=$(BUILDPATH)$(NAME).o $(BUILDPATH)camera.o
+OBJS=$(BUILDPATH)$(NAME).o $(BUILDPATH)camera.o $(BUILDPATH)rasterizer.o
 
 INCLUDEDIR= $(INCLUDE)
 
@@ -68,7 +68,7 @@ all: mkbuilddir $(LIB) $(TESTBIN)
 $(LIB): $(OBJS) 
 	$(AR) $(ARFLAGS) $@ $^
 
-$(OBJS): include/$(NAME).h include/camera.h
+$(OBJS): include/$(NAME).h include/camera.h include/rasterizer.h
 	$(CC) $(CFLAGS) -c src/$(@F:.o=.c) -o $@ $(INCLUDEDIR)
 	
 $(TESTBIN): $(LIB) test/font_provider_default.h
