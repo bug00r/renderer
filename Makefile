@@ -90,4 +90,5 @@ install:
 	mkdir -p $(INSTALL_ROOT)lib$(BIT_SUFFIX)
 	cp ./include/$(NAME).h $(INSTALL_ROOT)include$(PATHSEP)$(NAME).h
 	cp ./include/camera.h $(INSTALL_ROOT)include$(PATHSEP)camera.h
+	cp ./include/rasterizer.h $(INSTALL_ROOT)include$(PATHSEP)rasterizer.h
 	cp $(LIB) $(INSTALL_ROOT)lib$(BIT_SUFFIX)$(PATHSEP)$(LIBNAME)
