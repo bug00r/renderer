@@ -36,15 +36,15 @@ typedef struct {
     vec3_t  ndc[3];
     vec3_t  raster[3];
     float   rZ[3];
+    float   weight[3];       //weight of barycentric
 } raster_state_t;
 
 typedef struct {
     unsigned int    cntVertex;       //cnt of Object Vertex values: 1-3
     vec3_t          vec[3];          //world coordinates of each vertex          
 	cRGB_t          color[3];        //color value of each vertex
-	vec2_t          texCoord[3];     //texture coordinate of each vertex
-    float           weight[3];       //weight of barycentric
-    texture_t       *tex;            //pointer to used texture
+	vec2_t          texCoord[3];     //texture coordinate of each vertex  
+    texture_t       *texture;        //pointer to used texture
 } raster_obj_t;
 
 /**
