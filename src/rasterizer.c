@@ -262,87 +262,19 @@ static bool _world_to_raster_line(const vec3_t * _v, vec3_t * _ndc, vec3_t * _ra
 	return false;
 }
 
-/**
-
-	MUST BE MOVED OUT INTO 3D ENGINE
-
- *  This function filters or clips line based on camera position. If both line vector lay
- *  behind the cam there is no need to draw. If both line points in front of the cam, they
- *  will leaved unhandled. If there is one point in front of the cam and one behind, there
- *  will be computed the intersection point and the given line will be clipped and the result
- *  stored in destination vectors. 
- * 
- * 	If return value is true, the destination vectors should be handled, otherwise not.
- */
-/**static bool __line_filter_or_clip(renderer_t* _renderer, vec3_t* _dest_start, vec3_t* _dest_end,
-								  const vec3_t* _line_start, const vec3_t* _line_end ) {
-	
-	renderer_t* renderer = _renderer;
-	plane_t *near = &renderer->camera.frustum.near;
-	vec3_t *normal = &near->normal;
-
-	vec3_t	*line_start = (vec3_t*)_line_start;
-	vec3_t	*line_end = (vec3_t*)_line_end;
-
-	bool filtered = false;
-	float dist_start = mu_point_plane_distance_normal(line_start, &near->lb, normal); 
-	float dist_end = mu_point_plane_distance_normal(line_end, &near->lb, normal);
-	bool start_out = (dist_start < 0);
-	bool end_out = (dist_end < 0);
-
-	filtered = (start_out && end_out);
-
-	//printf("---------\nstart out: %i(d:%f)  end out: %i(d:%f)\n", start_out, dist_start, end_out, dist_end);
-	//printf("line: ");
-	//vec3_print(line_start);
-	//vec3_print(line_end);
-	//print_camera(&renderer->camera);
-
-	vec3_copy_dest(_dest_start, line_start);
-	vec3_copy_dest(_dest_end, line_end);
-
-	if (filtered)  {	
-		return false;
-	} else if ( !start_out && !end_out ) {
-		return true;
-	}
-
-	vec3_t intersect;
-	if (mu_line_plane_intersection_normal(&intersect, line_start, line_end, &near->lb, normal)) {
-		vec3_t *to_clip = ( start_out ? _dest_start : _dest_end);
-		vec3_copy_dest(to_clip, &intersect);
-		//printf("line clip: ");
-		//vec3_print(to_clip);
-	}
-
-	return true;
-}*/
-
 static void raster_line_in_point_mode(raster_ctx_t *_ctx, const raster_obj_t * _obj, raster_state_t *_state)
 {
     raster_ctx_t *ctx = _ctx;
     const raster_obj_t *obj = _obj;
     raster_state_t *state = _state;
 
-	//renderer_t * renderer = _renderer;
-	//const camera_t * cam = &renderer->camera;
-	const mat4_t * ct = ctx->ct;//&cam->transformation;
-	//const vertex_t ** vertices = (const vertex_t **)shape->vertices;
-	//const vertex_t * v1 = (const vertex_t *)vertices[0]; 
-	//const vertex_t * v2 = (const vertex_t *)vertices[1];
-	const cRGB_t *v1c = &obj->color[0];//&v1->color;
+	const mat4_t * ct = ctx->ct;
+
+	const cRGB_t *v1c = &obj->color[0];
 	const int bufWidth = ctx->bufWidth;
 	const unsigned int imgW = ctx->imgWidth, imgH = ctx->imgHeight, used_samples = ctx->used_samples;
 	const float imgW_h = ctx->imgWidth_half, imgH_h = ctx->imgHeight_half;
 
-	float factor = 1.f;
-	/*vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
-		   pNDC2 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2;
-	
-	float weight1 = ct->_44, 
-		  weight2 = ct->_44, 
-		  rz1, rz2;
-	*/ 
 	vec3_t *pRaster1 = &state->raster[0], *pRaster2 = &state->raster[1],
 		   *pNDC1 = &state->ndc[0], *pNDC2 = &state->ndc[1];
 	pNDC1->x = ct->_14; pNDC2->x = ct->_14;
@@ -356,14 +288,6 @@ static void raster_line_in_point_mode(raster_ctx_t *_ctx, const raster_obj_t * _
 
 	*weight1 = ct->_44; *weight2 = ct->_44;
 
-	// MUST BE MOVED OUT TO 3D ENGINE
-	/*vec3_t _v1v, _v2v;
-	const vec3_t * v1v = &_v1v, * v2v = &_v2v;
-	if ( !__line_filter_or_clip(renderer, &_v1v, &_v2v, &obj->vec[0], &obj->vec[1]) ) {
-		return;
-	}*/
-	//EOF MOVED OUT
-
 	const vec3_t *v1v = &obj->vec[0], *v2v = &obj->vec[1];
 
 	_world_to_raster_line(v1v, pNDC1, pRaster1, weight1, &imgW_h, &imgH_h, rz1, ct);
@@ -375,6 +299,7 @@ static void raster_line_in_point_mode(raster_ctx_t *_ctx, const raster_obj_t * _
 	unsigned int bi1 = (normR1.y * bufWidth + (normR1.x * used_samples));
 	unsigned int bi2 = (normR2.y * bufWidth + (normR2.x * used_samples));
 
+	float factor = 1.f;
 	cRGB_t * frameBuffer = ctx->frameBuffer;
 	for (unsigned int sample = used_samples; sample--;) {
 		
@@ -425,21 +350,10 @@ static void raster_line_in_line_mode(raster_ctx_t *_ctx, const raster_obj_t * _o
     const raster_obj_t *obj = _obj;
     raster_state_t *state = _state;
 
-	//VARS
-	//renderer_t * renderer = _renderer;
-	//const camera_t * cam = &renderer->camera;
 	const mat4_t * ct = ctx->ct;
-	//const vertex_t ** vertices = (const vertex_t **)shape->vertices;
-	//const vertex_t * v1 = (const vertex_t *)vertices[0]; 
-	//const vertex_t * v2 = (const vertex_t *)vertices[1];
+
 	const cRGB_t * v1c = &obj->color[0];
 	const float imgW_h = ctx->imgWidth_half, imgH_h = ctx->imgHeight_half;
-
-	/*vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
-		   pNDC2 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2;
-	float weight1 = ct->_44, 
-		  weight2 = ct->_44, 
-		  rz1, rz2;*/
 
 	vec3_t *pRaster1 = &state->raster[0], *pRaster2 = &state->raster[1],
 		   *pNDC1 = &state->ndc[0], *pNDC2 = &state->ndc[1];
@@ -453,15 +367,6 @@ static void raster_line_in_line_mode(raster_ctx_t *_ctx, const raster_obj_t * _o
 		  *rz2 = &state->rZ[1];
 
 	*weight1 = ct->_44; *weight2 = ct->_44;
-
-	//const vec3_t * v1v =  &v1->vec, * v2v =  &v2->vec;
-
-	//FILTER AND CLIP MUST BE MOVED OUT TO 3D ENGINE
-	/*vec3_t _v1v, _v2v;
-	const vec3_t * v1v = &_v1v, * v2v = &_v2v;
-	if ( !__line_filter_or_clip(renderer, &_v1v, &_v2v, &obj->vec[0], &obj->vec[1]) ) {
-		return;
-	}*/
 	
 	const vec3_t *v1v = &obj->vec[0], *v2v = &obj->vec[1];
 
@@ -557,42 +462,22 @@ static void raster_line(raster_ctx_t *_ctx, const raster_obj_t * _obj, raster_st
     const raster_obj_t *obj = _obj;
     raster_state_t *state = _state;
 	
-	//renderer_t * renderer = _renderer;
-	//const camera_t * cam = &renderer->camera;
 	const mat4_t * ct = ctx->ct;
-	//const vertex_t ** vertices = (const vertex_t **)shape->vertices;
-	//const vertex_t * v1 = (const vertex_t *)vertices[0]; 
-	//const vertex_t * v2 = (const vertex_t *)vertices[1];
+
 	const cRGB_t * v1c = &obj->color[0];
-	
-	//vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
-	//	   pNDC2 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2;
+
 	vec3_t *pRaster1 = &state->raster[0], *pRaster2 = &state->raster[1],
 		   *pNDC1 = &state->ndc[0], *pNDC2 = &state->ndc[1];
 	pNDC1->x = ct->_14; pNDC2->x = ct->_14;
 	pNDC1->y = ct->_24; pNDC2->y = ct->_24;
 	pNDC1->z = ct->_34; pNDC2->z = ct->_34;
 
-	/*float weight1 = ct->_44, 
-		  weight2 = ct->_44, 
-		  rz1, rz2;
-    */
 	float *weight1 = &state->weight[0], 
 		  *weight2 = &state->weight[1], 
 		  *rz1 = &state->rZ[0], 
 		  *rz2 = &state->rZ[1];
 
 	*weight1 = ct->_44; *weight2 = ct->_44;
-
-	//vec3_t _v1v, _v2v;
-	//
-	
-	//FILTER AND CLIP MUST BE MOVED OUT TO 3D ENGINE
-	/*vec3_t _v1v, _v2v;
-	const vec3_t * v1v = &_v1v, * v2v = &_v2v;
-	if ( !__line_filter_or_clip(renderer, &_v1v, &_v2v, &obj->vec[0], &obj->vec[1]) ) {
-		return;
-	}*/
 	
 	const vec3_t *v1v = &obj->vec[0], *v2v = &obj->vec[1];
 
@@ -671,12 +556,8 @@ static void raster_triangle_in_point_mode(raster_ctx_t *_ctx, const raster_obj_t
     const raster_obj_t *obj = _obj;
     raster_state_t *state = _state;
 
-	//const camera_t *  cam = &renderer->camera;
-	const mat4_t *  ct = ctx->ct;//&cam->transformation;
-	//const vertex_t **  vertices = (const vertex_t **)shape->vertices;
-	//const vertex_t *  v1 = (const vertex_t *)vertices[0]; 
-	//const vertex_t *  v2 = (const vertex_t *)vertices[1];
-	//const vertex_t *  v3 = (const vertex_t *)vertices[2];
+	const mat4_t *  ct = ctx->ct;
+
 	const vec3_t *v1v = &obj->vec[0], *v2v = &obj->vec[1], *v3v = &obj->vec[2];
 	const cRGB_t *v1c = &obj->color[0], *v2c = &obj->color[1], *v3c = &obj->color[2];
 
@@ -695,14 +576,12 @@ static void raster_triangle_in_point_mode(raster_ctx_t *_ctx, const raster_obj_t
 
 	*weight1 = ct->_44; *weight2 = ct->_44; *weight3 = ct->_44;
 
-	//EO VARS
-
 	if (_world_to_raster(v1v, pNDC1, pRaster1, weight1, &imgW_h, &imgH_h, rz1, ct)) return; 
 	if (_world_to_raster(v2v, pNDC2, pRaster2, weight2, &imgW_h, &imgH_h, rz2, ct)) return; 
 	if (_world_to_raster(v3v, pNDC3, pRaster3, weight3, &imgW_h, &imgH_h, rz3, ct)) return; 
 
 	// TODO backface Culling outsourcing to 3D Engine
-	//if (__r_triangle_is_backface(&pNDC1, &pNDC2, &pNDC3)) return;
+	if (__r_triangle_is_backface(pNDC1, pNDC2, pNDC3)) return;
 
 	bool is1in = (pRaster1->x < ctx->imgWidth) && (pRaster1->x >= 0) && (pRaster1->y < ctx->imgHeight) && (pRaster1->y >= 0 );
 	bool is2in = (pRaster2->x < ctx->imgWidth) && (pRaster2->x >= 0) && (pRaster2->y < ctx->imgHeight) && (pRaster2->y >= 0 );
@@ -740,12 +619,8 @@ static void raster_triangle_in_line_mode(raster_ctx_t *_ctx, const raster_obj_t 
     const raster_obj_t *obj = _obj;
     raster_state_t *state = _state;
 
-	//const camera_t *  cam = &renderer->camera;
-	const mat4_t *  ct = ctx->ct;//&cam->transformation;
-	//const vertex_t **  vertices = (const vertex_t **)shape->vertices;
-	//const vertex_t *  v1 = (const vertex_t *)vertices[0]; 
-	//const vertex_t *  v2 = (const vertex_t *)vertices[1];
-	//const vertex_t *  v3 = (const vertex_t *)vertices[2];
+	const mat4_t *  ct = ctx->ct;
+
 	const vec3_t *v1v = &obj->vec[0], *v2v = &obj->vec[1], *v3v = &obj->vec[2];
 	const cRGB_t *v1c = &obj->color[0], *v2c = &obj->color[1], *v3c = &obj->color[2];
 	const float imgW_h = ctx->imgWidth_half, imgH_h = ctx->imgHeight_half;
@@ -761,14 +636,12 @@ static void raster_triangle_in_line_mode(raster_ctx_t *_ctx, const raster_obj_t 
 
 	*weight1 = ct->_44; *weight2 = ct->_44; *weight3 = ct->_44;
 
-	//EO VARS
-
 	if (_world_to_raster(v1v, pNDC1, pRaster1, weight1, &imgW_h, &imgH_h, rz1, ct)) return; 
 	if (_world_to_raster(v2v, pNDC2, pRaster2, weight2, &imgW_h, &imgH_h, rz2, ct)) return; 
 	if (_world_to_raster(v3v, pNDC3, pRaster3, weight3, &imgW_h, &imgH_h, rz3, ct)) return; 
 
 	//TODO Backface Culling should be OUT to 3D Engine
-	//if (__r_triangle_is_backface(pNDC1, pNDC2, pNDC3)) return;
+	if (__r_triangle_is_backface(pNDC1, pNDC2, pNDC3)) return;
 
 	vec2_t start = { pRaster1->x, pRaster1->y };
 	vec2_t end = { pRaster2->x, pRaster2->y };
@@ -828,13 +701,8 @@ static void raster_triangle(raster_ctx_t *_ctx, const raster_obj_t * _obj, raste
     const raster_obj_t *obj = _obj;
     raster_state_t *state = _state;
 
-	//VARS
-	//const camera_t *  cam = &renderer->camera;
-	const mat4_t *ct = ctx->ct;//&cam->transformation;
-	//const vertex_t **  vertices = (const vertex_t **)shape->vertices;
-	//const vertex_t *  v1 = (const vertex_t *)vertices[0]; 
-	//const vertex_t *  v2 = (const vertex_t *)vertices[1];
-	//const vertex_t *  v3 = (const vertex_t *)vertices[2];
+	const mat4_t *ct = ctx->ct;
+
 	const vec3_t *v1v = &obj->vec[0], *v2v = &obj->vec[1], *v3v = &obj->vec[2];
 	const cRGB_t *v1c = &obj->color[0], *v2c = &obj->color[1], *v3c = &obj->color[2];
 	const vec2_t *v1t = &obj->texCoord[0], *v2t = &obj->texCoord[1], *v3t = &obj->texCoord[2];
@@ -844,27 +712,12 @@ static void raster_triangle(raster_ctx_t *_ctx, const raster_obj_t * _obj, raste
 	const unsigned int imgW = ctx->imgWidth, imgH = ctx->imgHeight, used_samples = ctx->used_samples;
 	const float imgW_h = ctx->imgWidth_half, imgH_h = ctx->imgHeight_half, sample_factor = ctx->sample_factor;
 	
-	//TODO CONTINUE REFACTORING HERE!!!
-
-	/*vec3_t pNDC1 = {ct->_14, ct->_24, ct->_34}, 
-		   pNDC2 = {ct->_14, ct->_24, ct->_34}, 
-		   pNDC3 = {ct->_14, ct->_24, ct->_34}, pRaster1, pRaster2, pRaster3;
-	
-	float weight1 = ct->_44, 
-		  weight2 = ct->_44, 
-		  weight3 = ct->_44, 
-		  rz1, rz2, rz3;
-	*/
 	vec3_t *pRaster1 = &state->raster[0], *pRaster2 = &state->raster[1], *pRaster3 = &state->raster[2],
 		   *pNDC1 = &state->ndc[0], *pNDC2 = &state->ndc[1], *pNDC3 = &state->ndc[2];
 	pNDC1->x = ct->_14; pNDC2->x = ct->_14; pNDC3->x = ct->_14;
 	pNDC1->y = ct->_24; pNDC2->y = ct->_24; pNDC3->y = ct->_24;
 	pNDC1->z = ct->_34; pNDC2->z = ct->_34; pNDC3->z = ct->_34;
 
-	/*float weight1 = ct->_44, 
-		  weight2 = ct->_44, 
-		  rz1, rz2;
-    */
 	float *weight1 = &state->weight[0], *weight2 = &state->weight[1], *weight3 = &state->weight[2],
 		  *rz1 = &state->rZ[0], *rz2 = &state->rZ[1], *rz3 = &state->rZ[2];
 
@@ -875,7 +728,7 @@ static void raster_triangle(raster_ctx_t *_ctx, const raster_obj_t * _obj, raste
 	if (_world_to_raster(v3v, pNDC3, pRaster3, weight3, &imgW_h, &imgH_h, rz3, ct)) return; 
 
 	//TODO backface culling moving out to 3D ENGINE
-	//if (__r_triangle_is_backface(pNDC1, pNDC2, pNDC3)) return;
+	if (__r_triangle_is_backface(pNDC1, pNDC2, pNDC3)) return;
 
 	barycentric_t bc;
 	bc.area = 1.f/((pRaster3->x - pRaster1->x) * (pRaster2->y - pRaster1->y) - 
@@ -886,11 +739,6 @@ static void raster_triangle(raster_ctx_t *_ctx, const raster_obj_t * _obj, raste
 	_compute_min_max_w_h(&maxx, &maxy, &minx, &miny, &curW, &curH, &imgW, &imgH,
 						 pRaster1, pRaster2, pRaster3);
 	
-	/*texture_cache_t * cache = renderer->texture_cache;
-	const int texId = shape->texId;
-	texture_t *texture = texture_cache_get(cache, (unsigned int)shape->texId); 
-	*/
-
 	vec3_t pixelSample;
 	for(; curH < maxy; ++curH) {
 		unsigned int curHbufWidth = curH * bufWidth;
