@@ -3,9 +3,10 @@ void test_renderer_creation() {
 	int w = 256;
 	int h = 256;
 	renderer_t * renderer = renderer_new(w, h, &bgcolor, 1);
-	
-	assert(renderer->imgWidth == w);
-	assert(renderer->imgHeight == h);
+	raster_ctx_t *rasterCtx = &renderer->rasterCtx;
+
+	assert(rasterCtx->imgWidth == w);
+	assert(rasterCtx->imgHeight == h);
 	
 	int buffsize = w*h;
 	float zbuffervalue = 5.f;
@@ -21,7 +22,7 @@ void test_renderer_creation() {
 	
 	assert(renderer->zBuffer[buffsize-2] == zbuffervalue);
 	
-	assert(renderer->imgWidth == w);
-	assert(renderer->imgHeight == h);
+	assert(rasterCtx->imgWidth == w);
+	assert(rasterCtx->imgHeight == h);
 	renderer_free(renderer);
 }

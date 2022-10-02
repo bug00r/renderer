@@ -3,7 +3,7 @@
 #include "renderer.h"
 
 
-static void _set_color_to_fb_(cRGB_t * frameBuffer,
+/*static void _set_color_to_fb_(cRGB_t * frameBuffer,
 							  const unsigned int * bi , 
 							  const float * sample_factor,
 							  const cRGB_t * new_color) {
@@ -12,9 +12,9 @@ static void _set_color_to_fb_(cRGB_t * frameBuffer,
 	fbc->r = new_color->r * sf;
 	fbc->g = new_color->g * sf;
 	fbc->b = new_color->b * sf;
-}
+}*/
 
-static bool _compute_px_color(cRGB_t * color, 
+/*static bool _compute_px_color(cRGB_t * color, 
 							  const barycentric_t *bc, 
 							  const float * weight1, const float * weight2, const float * weight3,
 							  const texture_t * texture,
@@ -51,10 +51,10 @@ static bool _compute_px_color(cRGB_t * color,
 	}
 
 	return true;
-}
+}*/
 
 
-static void update_sample(vec3_t * _pixelSample, const vec2_t ** _cursample,
+/*static void update_sample(vec3_t * _pixelSample, const vec2_t ** _cursample,
 						  const unsigned int *curW, const unsigned int *curH
 						  ) {
 	const vec2_t * cursample = *_cursample;
@@ -65,9 +65,9 @@ static void update_sample(vec3_t * _pixelSample, const vec2_t ** _cursample,
 	pixelSample->y = *curH;
 	pixelSample->y += cursample->y;
 	++(*_cursample);
-}
+}*/
 
-static bool _compute_and_set_z_point(const float * rz1, const unsigned int * bi, float * zBuffer) {
+/*static bool _compute_and_set_z_point(const float * rz1, const unsigned int * bi, float * zBuffer) {
 		
 	float * old_z = zBuffer + *bi;
              
@@ -76,9 +76,9 @@ static bool _compute_and_set_z_point(const float * rz1, const unsigned int * bi,
 	*old_z = *rz1;	
 	
 	return false;
-}
+}*/
 
-static bool _compute_sample_and_check_point(vec3_t * _pixelSample, const vec2_t ** _cursample,
+/*static bool _compute_sample_and_check_point(vec3_t * _pixelSample, const vec2_t ** _cursample,
 										 unsigned int *curW, unsigned int *curH,
 										 const unsigned int *imgW, const unsigned int *imgH,
 										 const vec3_t * pRaster1) { 
@@ -96,9 +96,9 @@ static bool _compute_sample_and_check_point(vec3_t * _pixelSample, const vec2_t 
 	 }
 	 
 	return true;
-}
+}*/
 
-static bool _compute_sample_bc_and_check_line(const float *_limit, const float *_raster_len, const float *_raster_len_inv, vec3_t * _pixelSample, const vec2_t ** _cursample,
+/*static bool _compute_sample_bc_and_check_line(const float *_limit, const float *_raster_len, const float *_raster_len_inv, vec3_t * _pixelSample, const vec2_t ** _cursample,
 										 const unsigned int *curW, const unsigned int *curH,
 										 barycentric_t * _bc, const vec3_t * pRaster1, const vec3_t * pRaster2) { 
 	vec3_t * pixelSample = _pixelSample;
@@ -125,10 +125,10 @@ static bool _compute_sample_bc_and_check_line(const float *_limit, const float *
 		return false;
 	} 
 	return true;								 
-}
+}*/
 
 
-static bool _compute_and_set_z_line(const float * rz1, const float * rz2, const barycentric_t *bc, 
+/*static bool _compute_and_set_z_line(const float * rz1, const float * rz2, const barycentric_t *bc, 
 								    const unsigned int * bi, float * zBuffer) {
 
 	float z = *rz1;
@@ -144,9 +144,9 @@ static bool _compute_and_set_z_line(const float * rz1, const float * rz2, const 
 	*old_z = z;
 	
 	return false;
-}
+}*/
 
-static bool _world_to_raster_line(const vec3_t * _v, vec3_t * _ndc, vec3_t * _raster, float * _weight,
+/*static bool _world_to_raster_line(const vec3_t * _v, vec3_t * _ndc, vec3_t * _raster, float * _weight,
 							 const float * imgW_h, const float * imgH_h, float * rz3, const mat4_t * _ct) {
 	
 	vec3_t * ndc = _ndc;
@@ -172,9 +172,12 @@ static bool _world_to_raster_line(const vec3_t * _v, vec3_t * _ndc, vec3_t * _ra
 	*rz3 = 1.f/raster->z;
 
 	return false;
-}
+}*/
 
 /**
+
+	THIS SHOULD BE USED WITH PRECALCULATED VALUES
+
  *  This function filters or clips line based on camera position. If both line vector lay
  *  behind the cam there is no need to draw. If both line points in front of the cam, they
  *  will leaved unhandled. If there is one point in front of the cam and one behind, there
@@ -227,7 +230,7 @@ static bool __line_filter_or_clip(renderer_t* _renderer, vec3_t* _dest_start, ve
 	return true;
 }
 
-static void render_line_in_point_mode(renderer_t * _renderer, const shape_t *  shape) {
+/*static void render_line_in_point_mode(renderer_t * _renderer, const shape_t *  shape) {
 	//VARS
 	renderer_t * renderer = _renderer;
 	const camera_t * cam = &renderer->camera;
@@ -272,18 +275,18 @@ static void render_line_in_point_mode(renderer_t * _renderer, const shape_t *  s
 		_set_color_to_fb_(frameBuffer,&bi ,&factor,v1c);
 
 	}	
-}
+}*/
 
-typedef struct {
+/*typedef struct {
 	vec2_t *start; 
 	vec2_t* end;
 	renderer_t * renderer;
 	float factor;
 	const cRGB_t * color;
 } renderer_2d_line_ctx_t;
+*/
 
-
-static void _2d_line_to_framebuffer(int32_t const * const x, int32_t const * const y, void *data) {
+/*static void _2d_line_to_framebuffer(int32_t const * const x, int32_t const * const y, void *data) {
 	renderer_2d_line_ctx_t* ctx = (renderer_2d_line_ctx_t*)data;
 	renderer_t *renderer = ctx->renderer;
 
@@ -297,14 +300,14 @@ static void _2d_line_to_framebuffer(int32_t const * const x, int32_t const * con
 
 	}
 
-}
+}*/
 
-static void _draw_2D_line_to_renderer(renderer_t * _renderer, vec2_t *start, vec2_t* end, const cRGB_t * color) {
+/*static void _draw_2D_line_to_renderer(renderer_t * _renderer, vec2_t *start, vec2_t* end, const cRGB_t * color) {
 	renderer_2d_line_ctx_t ctx = { start, end, _renderer, 1.f/_renderer->used_samples, color };
 	geometry_line(start, end, _2d_line_to_framebuffer, &ctx);
-}
+}*/
 
-static void render_line_in_line_mode(renderer_t * _renderer, const shape_t *  shape) {
+/*static void render_line_in_line_mode(renderer_t * _renderer, const shape_t *  shape) {
 
 	//VARS
 	renderer_t * renderer = _renderer;
@@ -337,8 +340,9 @@ static void render_line_in_line_mode(renderer_t * _renderer, const shape_t *  sh
 	vec2_t end = { pRaster2.x, pRaster2.y };
 
 	_draw_2D_line_to_renderer(renderer, &start, &end, v1c);
-}
+}*/
 
+/*
 typedef struct {
 	vec3_t *pRaster1; 
 	vec3_t *pRaster2;
@@ -413,9 +417,9 @@ static void _3d_line_to_framebuffer(int32_t const * const x, int32_t const * con
 		}
 	}
 
-}
+}*/
 
-static void render_line(renderer_t * _renderer, const shape_t * shape){
+/*static void render_line(renderer_t * _renderer, const shape_t * shape){
 	//VARS
 	renderer_t * renderer = _renderer;
 	const camera_t * cam = &renderer->camera;
@@ -459,14 +463,14 @@ static void render_line(renderer_t * _renderer, const shape_t * shape){
 		(const float*)&limit, (const float*)&raster_len, (const float*)&raster_len_inv		
 	};
 	geometry_line(&start, &end, _3d_line_to_framebuffer, &ctx);
-}
+}*/
 
 #if 0
 	/**
 		returns false if pixel sample is inside triangle otherwise false.
 	*/
 #endif
-static bool _compute_sample_bc_and_check(vec3_t * _pixelSample, const vec2_t ** _cursample,
+/*static bool _compute_sample_bc_and_check(vec3_t * _pixelSample, const vec2_t ** _cursample,
 										 const unsigned int *curW, const unsigned int *curH,
 										 barycentric_t * _bc,
 										 const vec3_t * pRaster1, const vec3_t * pRaster2, const vec3_t * pRaster3) {
@@ -484,14 +488,14 @@ static bool _compute_sample_bc_and_check(vec3_t * _pixelSample, const vec2_t ** 
 	bc->bc2 = bc->w2_01 * bc->area;
 	
 	return false;
-}
+}*/
 
 #if 0
 	/**
 		returns true if pixel should skipped otherwise false.
 	*/
 #endif
-static bool _compute_and_set_z(const float * rz1, const float * rz2, const float * rz3,
+/*static bool _compute_and_set_z(const float * rz1, const float * rz2, const float * rz3,
 							   const barycentric_t *bc, const unsigned int * bi,
 							   float * zBuffer) {
 	float z = (*rz1 * bc->bc0);
@@ -505,9 +509,9 @@ static bool _compute_and_set_z(const float * rz1, const float * rz2, const float
 	*old_z = z;			
 	
 	return false;
-}
+}*/
 
-static void _compute_min_max_w_h(float *maxx, float *maxy, float *minx, float *miny,
+/*static void _compute_min_max_w_h(float *maxx, float *maxy, float *minx, float *miny,
 								 unsigned int *curW, unsigned int *curH, const unsigned int *imgW, const unsigned int *imgH,
 								 const vec3_t * pRaster1, const vec3_t * pRaster2, const vec3_t * pRaster3) {
 	*maxx = fminf((float)*imgW, fmaxf(pRaster1->x, fmaxf(pRaster2->x, pRaster3->x)));
@@ -516,7 +520,7 @@ static void _compute_min_max_w_h(float *maxx, float *maxy, float *minx, float *m
 	*miny = fmaxf(0.f, fminf(pRaster1->y, fminf(pRaster2->y, pRaster3->y)));
 	*curH = *miny;
 	*curW = *minx;
-}
+}*/
 
 #if 0
 	/**
@@ -524,7 +528,7 @@ static void _compute_min_max_w_h(float *maxx, float *maxy, float *minx, float *m
 		mirroring negative perspective depth projection.
 	*/
 #endif
-static bool _world_to_raster(const vec3_t * _v, vec3_t * _ndc, vec3_t * _raster, float * _weight,
+/*static bool _world_to_raster(const vec3_t * _v, vec3_t * _ndc, vec3_t * _raster, float * _weight,
 							 const float * imgW_h, const float * imgH_h, float * rz3, const mat4_t * _ct) {
 	
 	vec3_t * ndc = _ndc;
@@ -550,9 +554,9 @@ static bool _world_to_raster(const vec3_t * _v, vec3_t * _ndc, vec3_t * _raster,
 	*rz3 = 1.f/raster->z;
 	
 	return false;
-}
+}*/
 
-static void render_point(renderer_t * renderer, const shape_t * shape){
+/*static void render_point(renderer_t * renderer, const shape_t * shape){
 		//VARS
 	const camera_t * cam = &renderer->camera;
 	const mat4_t * ct = &cam->transformation;
@@ -593,7 +597,9 @@ static void render_point(renderer_t * renderer, const shape_t * shape){
 		}
 	}
 }
+*/
 
+//THIS SHOULD BE OUTSOURCED AND PRECALCULATED
 static bool __r_triangle_is_backface(vec3_t *pNDC1, vec3_t *pNDC2, vec3_t *pNDC3)
 {
 	vec3_t pNDC2_1;
@@ -609,7 +615,7 @@ static bool __r_triangle_is_backface(vec3_t *pNDC1, vec3_t *pNDC2, vec3_t *pNDC3
 	return false;
 }
 
-static void render_triangle_in_point_mode(renderer_t *  renderer, const shape_t *  shape) {
+/*static void render_triangle_in_point_mode(renderer_t *  renderer, const shape_t *  shape) {
 	const camera_t *  cam = &renderer->camera;
 	const mat4_t *  ct = &cam->transformation;
 	const vertex_t **  vertices = (const vertex_t **)shape->vertices;
@@ -663,9 +669,9 @@ static void render_triangle_in_point_mode(renderer_t *  renderer, const shape_t 
 		}
 		
 	}	
-}
+}*/
 
-static void render_triangle_in_line_mode(renderer_t *  renderer, const shape_t *  shape) {
+/*static void render_triangle_in_line_mode(renderer_t *  renderer, const shape_t *  shape) {
 	const camera_t *  cam = &renderer->camera;
 	const mat4_t *  ct = &cam->transformation;
 	const vertex_t **  vertices = (const vertex_t **)shape->vertices;
@@ -704,9 +710,9 @@ static void render_triangle_in_line_mode(renderer_t *  renderer, const shape_t *
 	end = (vec2_t){ pRaster1.x, pRaster1.y };
 
 	_draw_2D_line_to_renderer(renderer, &start, &end, v3c);
-}
+} */
 
-static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
+/*static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 	//VARS
 	const camera_t *  cam = &renderer->camera;
 	const mat4_t *  ct = &cam->transformation;
@@ -775,21 +781,72 @@ static void render_triangle(renderer_t *  renderer, const shape_t *  shape){
 		}
 	}
 	
+}*/
+
+static void __copy_vertex_to_rasterObj(const vertex_t *_curVertex, unsigned int _vertexIdx, raster_obj_t *_rasterObj)
+{
+	const vertex_t *curVertex = _curVertex;
+	raster_obj_t *rasterObj = _rasterObj;
+	unsigned int vertexIndx = _vertexIdx;
+
+	vec3_copy_dest(&rasterObj->vec[vertexIndx], &curVertex->vec);
+	crgb_crgb_copy(&rasterObj->color[vertexIndx], &curVertex->color);
+	vec2_copy_dest(&rasterObj->texCoord[vertexIndx], &curVertex->texCoord);
+	
 }
 
-void render_shape(renderer_t *  renderer, const shape_t *  shape){
-	const shape_t *  curshape = shape;
-	const renderer_t * curRenderer = renderer;
-	switch(curshape->cntVertex){
-		case 3:
-			curRenderer->TRIANGLE_RENDER_FUNC(renderer, curshape); break;
-		case 2:
-			curRenderer->LINE_RENDER_FUNC(renderer, curshape); break;
-		case 1:
-			curRenderer->POINT_RENDER_FUNC(renderer, curshape); break;
-		default:
-			printf("Unknown vertex count oO\n");
+static void __shape_to_rasterObj(renderer_t *_renderer, const shape_t * _shape, raster_obj_t *_rasterObj)
+{
+	renderer_t *renderer = _renderer;
+	const shape_t *shape = _shape;
+	raster_obj_t *rasterObj = _rasterObj;
+
+	//Setting Raster texture
+	texture_cache_t * cache = renderer->texture_cache;
+	texture_t *texture = texture_cache_get(cache, (unsigned int)shape->texId); 
+	rasterObj->texture = texture;
+
+	//Setting Shape Parameter to Raster Obj
+	rasterObj->cntVertex = shape->cntVertex;
+	const vertex_t **vertices = (const vertex_t **)shape->vertices;
+	switch(rasterObj->cntVertex)
+	{
+		case 3: __copy_vertex_to_rasterObj(vertices[2], 2, rasterObj);
+		case 2: __copy_vertex_to_rasterObj(vertices[1], 1, rasterObj);
+		case 1: __copy_vertex_to_rasterObj(vertices[0], 0, rasterObj);
+		default: break;
 	}
+
+
+
+}
+
+void render_shape(renderer_t *renderer, const shape_t *shape){
+
+	const shape_t *  curshape = shape;
+	renderer_t * curRenderer = renderer;
+	raster_ctx_t *rasterCtx = &curRenderer->rasterCtx;
+
+	rasterCtx->ct = &curRenderer->camera.transformation;
+
+	raster_obj_t rasterObj;
+	raster_state_t rasterState;
+
+	__shape_to_rasterObj(renderer, curshape, &rasterObj);
+
+	if ( rasterObj.cntVertex == 2 )
+	{
+		vec3_t _v1v, _v2v;
+		const vec3_t * v1v = &_v1v, * v2v = &_v2v;
+		if ( !__line_filter_or_clip(curRenderer, &_v1v, &_v2v, &rasterObj.vec[0], &rasterObj.vec[1]) ) {
+			return;
+		}
+		vec3_copy_dest(&rasterObj.vec[0], v1v);
+		vec3_copy_dest(&rasterObj.vec[1], v2v);
+	}
+
+	raster(rasterCtx, &rasterObj, &rasterState);
+
 }
 
 /*
@@ -933,78 +990,96 @@ render_scene(renderer_t *  renderer, const scene_t *  scene){
 	}
 }
 
-void renderer_clear_frame(renderer_t * renderer){
-	const int buffersize = renderer->imgWidth * 
-						   renderer->imgHeight * 
-						   renderer->samplestep * renderer->samplestep;
+void renderer_clear_frame(renderer_t *renderer){
+	raster_ctx_t *rasterCtx = &renderer->rasterCtx;
+	const int buffersize = rasterCtx->imgWidth * 
+						   rasterCtx->imgHeight * 
+						   rasterCtx->samplestep * rasterCtx->samplestep;
 	memset(renderer->zBuffer, 0.f, buffersize * sizeof(float));
 	memset(renderer->frameBuffer, 0, buffersize * sizeof(cRGB_t));
-	renderer->max_z = RENDER_FLT_MAX;
-	renderer->min_z = 0.f;
+	rasterCtx->max_z = RENDER_FLT_MAX;
+	rasterCtx->min_z = 0.f;
 }
 
 // EXOPORTED TO RASTERIZER
 void renderer_set_vmode_solid(renderer_t * renderer) {
-	renderer->POINT_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_point;
+	raster_set_vmode_solid(&renderer->rasterCtx);
+	/**renderer->POINT_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_point;
 	renderer->LINE_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_line;
 	renderer->TRIANGLE_RENDER_FUNC 	= (RENDERER_RENDER_FUNC)render_triangle;
+	*/
 }
 
 void renderer_set_vmode_point(renderer_t * renderer) {
-	renderer->POINT_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_point;
+	raster_set_vmode_point(&renderer->rasterCtx);
+	/**renderer->POINT_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_point;
 	renderer->LINE_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_line_in_point_mode;
 	renderer->TRIANGLE_RENDER_FUNC 	= (RENDERER_RENDER_FUNC)render_triangle_in_point_mode;
+	*/
 }
 
 void renderer_set_vmode_line(renderer_t * renderer) {
-	renderer->POINT_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_point;
+	raster_set_vmode_line(&renderer->rasterCtx);
+	/**renderer->POINT_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_point;
 	renderer->LINE_RENDER_FUNC		= (RENDERER_RENDER_FUNC)render_line_in_line_mode;
 	renderer->TRIANGLE_RENDER_FUNC 	= (RENDERER_RENDER_FUNC)render_triangle_in_line_mode;
+	*/
 }
 // EOF EXPORTED TO RASTERIZER
 
 renderer_t * 
 renderer_new(int imgWidth, int imgHeight, cRGB_t * bgColor, unsigned int samplestep){
+	
 	renderer_t * newrenderer = malloc(sizeof(renderer_t));
 	newrenderer->projection = RP_ORTHOGRAPHIC;
-	//newrenderer->texture = NULL;
-	newrenderer->imgWidth = imgWidth;
-	newrenderer->imgHeight = imgHeight;
-	newrenderer->imgWidth_half = 0.5f * imgWidth;
-	newrenderer->imgHeight_half = 0.5f * imgHeight;
+	crgb_crgb_copy(&newrenderer->bgcolor, bgColor);
+	renderer_set_vmode_solid(newrenderer);
+	newrenderer->texture_cache = texture_cache_new();
+	renderer_clear_frame(newrenderer);
+
+	// INIT RASTER CTX
+	raster_ctx_t *rasterCtx = &newrenderer->rasterCtx;
+	rasterCtx->imgWidth = imgWidth;
+	rasterCtx->imgHeight = imgHeight;
+	rasterCtx->imgWidth_half = 0.5f * imgWidth;
+	rasterCtx->imgHeight_half = 0.5f * imgHeight;
 	unsigned int us = samplestep*samplestep;
 	unsigned int bw = imgWidth * us;
-	newrenderer->bufWidth = bw;
-	newrenderer->bufHeight = imgHeight;
-	newrenderer->samplestep = samplestep;
+	rasterCtx->bufWidth = bw;
+	rasterCtx->bufHeight = imgHeight;
+	rasterCtx->samplestep = samplestep;
+	
 	unsigned int buffersize = imgWidth * imgHeight * us;
 	newrenderer->frameBuffer = malloc(buffersize * sizeof(cRGB_t));
 	newrenderer->zBuffer = malloc(buffersize * sizeof(float));
-	crgb_crgb_copy(&newrenderer->bgcolor, bgColor);
-	renderer_clear_frame(newrenderer);
-	newrenderer->min_z = RENDER_FLT_MAX;
-	newrenderer->max_z = 0.f;
+	
+	rasterCtx->min_z = RENDER_FLT_MAX;
+	rasterCtx->max_z = 0.f;
+	rasterCtx->frameBuffer = newrenderer->frameBuffer;
+	rasterCtx->zBuffer = newrenderer->zBuffer;
+
+	//Transformation Matrix will be set during rendering
+	rasterCtx->ct = NULL;
+	
 	#if 0
 		//add samples logic
 	#endif
-	newrenderer->used_samples = us;
-	newrenderer->sample_factor = 1.f/newrenderer->used_samples;
+	rasterCtx->used_samples = us;
+	rasterCtx->sample_factor = 1.f/rasterCtx->used_samples;
 	float stepstart = 0.5f / (float)samplestep; //for st = 2 step is .25  for st = 4 0.125
 	float step = 2.f*stepstart; //distance between 
 
-	newrenderer->samples = malloc(newrenderer->used_samples * sizeof(vec2_t));
+	rasterCtx->samples = malloc(rasterCtx->used_samples * sizeof(vec2_t));
 
 	for( unsigned int sy = 0; sy < samplestep ;++sy ){
 		for( unsigned int sx = 0; sx < samplestep ;++sx ){
-			vec2_t  *cursample = &newrenderer->samples[sy * samplestep + sx];
+			vec2_t  *cursample = &rasterCtx->samples[sy * samplestep + sx];
 			cursample->x = stepstart + (sx * step);
 			cursample->y = stepstart + (sy * step);
 		}
 	}
+	// EOF INIT RASTER CTX
 	
-	renderer_set_vmode_solid(newrenderer);
-	newrenderer->texture_cache = texture_cache_new();
-
 	return newrenderer;
 }
 
@@ -1012,7 +1087,8 @@ void
 renderer_free(renderer_t * renderer){
 	free(renderer->frameBuffer);
 	free(renderer->zBuffer);
-	free(renderer->samples);
+	raster_ctx_t *rasterCtx = &renderer->rasterCtx;
+	free(rasterCtx->samples);
 	texture_cache_free(&renderer->texture_cache);
 	free(renderer);
 }
@@ -1021,18 +1097,19 @@ renderer_free(renderer_t * renderer){
 void 
 renderer_output_ppm(renderer_t * renderer, const char * filename){
 	unsigned int colcnt=0, bi=0, samplestart;
-	int i, j, imgW = renderer->imgWidth, imgH = renderer->imgHeight;
+	raster_ctx_t *rasterCtx = &renderer->rasterCtx;
+	int i, j, imgW = rasterCtx->imgWidth, imgH = rasterCtx->imgHeight;
     FILE *fp = fopen(filename, "wb"); /* b - binary mode */
     (void) fprintf(fp, "P6\n%d %d\n255\n", imgW, imgH);
 	cRGB_t fc;
 	unsigned char color[3*imgW*imgH];
     for (j = 0; j < imgH; ++j){
-	  bi = j * renderer->bufWidth;
+	  bi = j * rasterCtx->bufWidth;
 	  for (i = 0; i < imgW; ++i){
 		fc.r = 0.f, fc.g = 0.f, fc.b = 0.f;
-		samplestart = bi + (i*renderer->used_samples);
-		for (unsigned int sample = renderer->used_samples; sample--;){
-			cRGB_t * c = &renderer->frameBuffer[samplestart + sample];
+		samplestart = bi + (i*rasterCtx->used_samples);
+		for (unsigned int sample = rasterCtx->used_samples; sample--;){
+			cRGB_t * c = &rasterCtx->frameBuffer[samplestart + sample];
 			//crgb_crgb_add(&fc, c);
 			fc.r += c->r;
 			fc.g += c->g;
@@ -1049,27 +1126,28 @@ renderer_output_ppm(renderer_t * renderer, const char * filename){
 }
 
 void 
-renderer_output_z_buffer_ppm(renderer_t * renderer, const char * filename){
+renderer_output_z_buffer_ppm(renderer_t *renderer, const char * filename){
 	unsigned int colcnt=0,bi=0,samplestart;
-	int i, j, imgW = renderer->imgWidth, imgH = renderer->imgHeight;
+	raster_ctx_t *rasterCtx = &renderer->rasterCtx;
+	int i, j, imgW = rasterCtx->imgWidth, imgH = rasterCtx->imgHeight;
     FILE *fp = fopen(filename, "wb"); /* b - binary mode */
     (void) fprintf(fp, "P6\n%d %d\n255\n", imgW, imgH);
-	float _color, samplefactor = renderer->sample_factor;
+	float _color, samplefactor = rasterCtx->sample_factor;
 	unsigned char color[3*imgW*imgH];
 	
     for (j = 0; j < imgH; ++j){
-	  bi = j * renderer->bufWidth;
+	  bi = j * rasterCtx->bufWidth;
 	  for (i = 0; i < imgW; ++i){
 		_color = 0.f;
-		samplestart = bi + (i*renderer->used_samples);
-		for (unsigned int sample = renderer->used_samples; sample--;){
-			_color += renderer->zBuffer[samplestart + sample];
+		samplestart = bi + (i*rasterCtx->used_samples);
+		for (unsigned int sample = rasterCtx->used_samples; sample--;){
+			_color += rasterCtx->zBuffer[samplestart + sample];
 		}
 		
 		_color *= samplefactor ;
 		
 		if ( _color != RENDER_FLT_MAX ){
-			_color = (unsigned char)interpolate_lin(_color, renderer->max_z, 0.f, renderer->min_z, 255.f);
+			_color = (unsigned char)interpolate_lin(_color, rasterCtx->max_z, 0.f, rasterCtx->min_z, 255.f);
 		} else {
 			_color = 0.f;
 		}

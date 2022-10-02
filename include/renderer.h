@@ -32,32 +32,33 @@ typedef enum {
 	RP_ORTHOGRAPHIC
 } projection_t;
 
-typedef void (*RENDERER_RENDER_FUNC)(void *, const shape_t*);
+//typedef void (*RENDERER_RENDER_FUNC)(void *, const shape_t*);
 
 typedef struct _renderer {
-	int imgWidth;
-	int imgHeight;
-	float imgWidth_half;
-	float imgHeight_half;
-	int bufWidth;
-	int bufHeight;
+	raster_ctx_t rasterCtx; 
+	//int imgWidth;
+	//int imgHeight;
+	//float imgWidth_half;
+	//float imgHeight_half;
+	//int bufWidth;
+	//int bufHeight;
 	camera_t camera;
-	unsigned int samplestep;
-	unsigned int used_samples;
+	//unsigned int samplestep;
+	//unsigned int used_samples;
 	//unsigned int *wh_index;
-	vec2_t * samples;
-	float sample_factor;
+	//vec2_t * samples;
+	//float sample_factor;
 	cRGB_t * frameBuffer;
 	float * zBuffer;
 	//texture_t *texture; //TODO here we need a list of textures...currently we use one as test
 	texture_cache_t *texture_cache;
 	cRGB_t bgcolor;
 	projection_t projection;
-	float min_z;
-	float max_z;
-	RENDERER_RENDER_FUNC POINT_RENDER_FUNC;
-	RENDERER_RENDER_FUNC LINE_RENDER_FUNC;
-	RENDERER_RENDER_FUNC TRIANGLE_RENDER_FUNC;
+	//float min_z;
+	//float max_z;
+	//RENDERER_RENDER_FUNC POINT_RENDER_FUNC;
+	//RENDERER_RENDER_FUNC LINE_RENDER_FUNC;
+	//RENDERER_RENDER_FUNC TRIANGLE_RENDER_FUNC;
 } renderer_t;
 
 
@@ -96,7 +97,7 @@ void renderer_set_vmode_line(renderer_t * renderer);
 		Create renderer
 	*/
 #endif
-renderer_t * renderer_new(int imgWidth, int imgHeight, cRGB_t * bgColor, unsigned int samplestep);
+renderer_t* renderer_new(int imgWidth, int imgHeight, cRGB_t * bgColor, unsigned int samplestep);
 
 #if 0
 	/**
