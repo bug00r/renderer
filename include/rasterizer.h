@@ -36,7 +36,8 @@ typedef struct {
     vec3_t  ndc[3];
     vec3_t  raster[3];
     float   rZ[3];
-    float   weight[3];       //weight of barycentric
+    float   weight[3];      //weight of barycentric
+    bool    validWeight;    //is the weight of the vertices ok
 } raster_state_t;
 
 typedef struct {
@@ -98,8 +99,39 @@ typedef struct {
 } raster_ctx_t;
 
 void raster(raster_ctx_t *ctx, const raster_obj_t * obj, raster_state_t *state);
+/**
+    This function calculates the transformation chain from world to raster coordinates.
+    For some interception reasons there could be a claim for a step by step computation.
+    For this reason there are some other functions for each chain element.
+
+    IMPORTANT: This Order must be followed:
+
+         1. raster_precalc_weight
+         2. raster_precalc_ndc
+         3. raster_precalc_raster
+*/
 void raster_precalc(raster_ctx_t *ctx, const raster_obj_t * obj, raster_state_t *state);
 
+/**
+    Calculates weight of the given vertices. If the weight is negative
+    a vertex lays behind the projection plane. 
+
+    Note: In the current Implementation is no retriangulation algorithm
+          set. If one of the given weights is negative an Object should
+          be skipped from rasterization. If not there will be rendered 
+          some pixel artifacts from vertices behind the camera.
+*/
+void raster_precalc_weight(raster_ctx_t *ctx, const raster_obj_t * obj, raster_state_t *state);
+
+/**
+    This Function computes the natural device coordinates in respect of the given Vertex weight.
+*/
+void raster_precalc_ndc(raster_ctx_t *ctx, const raster_obj_t * obj, raster_state_t *state);
+
+/**
+    This Functions computes the Raster Coordinates based on Rasterplate size and ndc coordinates.
+*/
+void raster_precalc_raster(raster_ctx_t *ctx, const raster_obj_t * obj, raster_state_t *state);
 /* 
 	This function set solid renderer view mode. This means it renders interpolated colors by vertex or texture like expected.
 */

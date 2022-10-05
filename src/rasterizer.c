@@ -793,6 +793,29 @@ void raster(raster_ctx_t *_ctx, const raster_obj_t * _obj, raster_state_t *_stat
 	}
 }
 
+void raster_precalc_weight(raster_ctx_t *_ctx, const raster_obj_t * _obj, raster_state_t *_state)
+{
+    raster_ctx_t *ctx = _ctx;
+    const raster_obj_t *obj = _obj;
+    raster_state_t *state = _state;
+
+
+}
+
+void raster_precalc_ndc(raster_ctx_t *_ctx, const raster_obj_t * _obj, raster_state_t *_state)
+{
+    raster_ctx_t *ctx = _ctx;
+    const raster_obj_t *obj = _obj;
+    raster_state_t *state = _state;
+}
+
+void raster_precalc_raster(raster_ctx_t *_ctx, const raster_obj_t * _obj, raster_state_t *_state)
+{
+    raster_ctx_t *ctx = _ctx;
+    const raster_obj_t *obj = _obj;
+    raster_state_t *state = _state;
+}
+
 void raster_precalc(raster_ctx_t *_ctx, const raster_obj_t * _obj, raster_state_t *_state)
 {
     raster_ctx_t *ctx = _ctx;
