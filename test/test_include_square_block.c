@@ -22,8 +22,8 @@ void test_render_square_block(renderer_t * renderer, bool isperspective) {
 	
 	#ifdef debug
 		printf("without rotation:\n");
-		printf("min_z:\t%f\n", renderer->min_z);
-		printf("max_z:\t%f\n", renderer->max_z);
+		printf("min_z:\t%f\n", renderer->rasterCtx.min_z);
+		printf("max_z:\t%f\n", renderer->rasterCtx.max_z);
 	#endif
 	
 	mat3_t * rotz_mat = create_rot_z_mat(0.f);
@@ -52,8 +52,8 @@ void test_render_square_block(renderer_t * renderer, bool isperspective) {
 	
 	#ifdef debug
 		printf("with rotation:\n");
-		printf("min_z:\t%f\n", renderer->min_z);
-		printf("max_z:\t%f\n", renderer->max_z);
+		printf("min_z:\t%f\n", renderer->rasterCtx.min_z);
+		printf("max_z:\t%f\n", renderer->rasterCtx.max_z);
 	#endif
 	
 	free_mesh(square_block);

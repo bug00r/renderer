@@ -272,7 +272,6 @@ renderer_new(int imgWidth, int imgHeight, cRGB_t * bgColor, unsigned int samples
 	crgb_crgb_copy(&newrenderer->bgcolor, bgColor);
 	renderer_set_vmode_solid(newrenderer);
 	newrenderer->texture_cache = texture_cache_new();
-	renderer_clear_frame(newrenderer);
 
 	// INIT RASTER CTX
 	raster_ctx_t *rasterCtx = &newrenderer->rasterCtx;
@@ -317,6 +316,8 @@ renderer_new(int imgWidth, int imgHeight, cRGB_t * bgColor, unsigned int samples
 	}
 	// EOF INIT RASTER CTX
 	
+	renderer_clear_frame(newrenderer);
+
 	return newrenderer;
 }
 
