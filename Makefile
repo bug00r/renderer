@@ -33,12 +33,12 @@ ifeq ($(M32),1)
 	BIT_SUFFIX+=32
 endif
 
-CFLAGS+=-std=c11 -Wpedantic -pedantic-errors -Wall -Wextra
+override CFLAGS+=-std=c11 -Wpedantic -pedantic-errors -Wall -Wextra
 #-ggdb
 #-pg for profiling 
 
-LDFLAGS+=-L$(BUILDDIR) -L/c/dev/lib$(BIT_SUFFIX)
-CFLAGS+=-I./include -I/c/dev/include 
+override LDFLAGS+=-L$(BUILDDIR) -L/c/dev/lib$(BIT_SUFFIX)
+override CFLAGS+=-I./include -I/c/dev/include 
 
 NAME=renderer
 LIBNAME=lib$(NAME).a
@@ -46,7 +46,8 @@ LIB=$(BUILDPATH)$(LIBNAME)
 OBJS=$(BUILDPATH)$(NAME).o $(BUILDPATH)camera.o
 
 TESTBIN=$(BUILDPATH)test_$(NAME).exe
-LDFLAGS+=-l$(NAME) -lscene -lr_font -lmesh -lshape -ltexture -lnoise -lfractals -lgeometry -lcrgb_array -ldl_list -lfarray -larray -lcolor -lstatistics -lutilsmath -lmat -lvec
+
+override LDFLAGS+=-l$(NAME) -lscene -lr_font -lmesh -lshape -ltexture -lnoise -lfractals -lgeometry -lcrgb_array -ldl_list -lfarray -larray -lcolor -lstatistics -lutilsmath -lmat -lvec
 
 all: mkbuilddir $(LIB)
 
