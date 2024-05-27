@@ -1,10 +1,10 @@
-void test_render_quad(renderer_t * renderer, bool isperspective) {
+void test_render_quad(Renderer * renderer, bool isperspective) {
 
-	vec3_t p1 = { -0.75f, -0.75f, 0.75f };
-	vec3_t p2 = { 0.75f, -0.75f, 0.75f };
-	vec3_t p3 = { -0.75f, 0.75f, 0.75f };
-	vec3_t p4 = { 0.75f, 0.75f, 0.75f };
-	mesh_t * quad = create_quad3( &p1, &p2, &p3, &p4);
+	Vec3 p1 = { -0.75f, -0.75f, 0.75f };
+	Vec3 p2 = { 0.75f, -0.75f, 0.75f };
+	Vec3 p3 = { -0.75f, 0.75f, 0.75f };
+	Vec3 p4 = { 0.75f, 0.75f, 0.75f };
+	Mesh * quad = create_quad3( &p1, &p2, &p3, &p4);
 	
 	render_mesh(renderer, quad);
 	
@@ -24,7 +24,7 @@ void test_render_quad(renderer_t * renderer, bool isperspective) {
 	
 	renderer_clear_frame(renderer);
 	
-	mat3_t * rotz_mat = create_rot_z_mat(40.f);
+	Mat3 * rotz_mat = create_rot_z_mat(40.f);
 	mat_mul_mesh(quad, rotz_mat);
 	free(rotz_mat);
 	

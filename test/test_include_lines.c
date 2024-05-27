@@ -1,10 +1,10 @@
-void test_render_lines(renderer_t * renderer, bool isperspective) {
+void test_render_lines(Renderer * renderer, bool isperspective) {
 	
-	vec3_t p = { -1.f, -1.0f, 0.f };
-	vec3_t p2 = { -.8f, 1.0f, 0.f };
-	mesh_t * line = create_line3(&p, &p2);
+	Vec3 p = { -1.f, -1.0f, 0.f };
+	Vec3 p2 = { -.8f, 1.0f, 0.f };
+	Mesh * line = create_line3(&p, &p2);
 	
-	cRGB_t red = {1.f, 0.f, 0.f};
+	ColorRGB red = {1.f, 0.f, 0.f};
 	set_shape_color(line->shapes[0], &red);
 	
 	float step = 0.f;

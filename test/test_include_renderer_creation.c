@@ -1,8 +1,8 @@
 void test_renderer_creation() {
-	cRGB_t bgcolor = {0.f, 0.f, 0.f};
+	ColorRGB bgcolor = {0.f, 0.f, 0.f};
 	int w = 256;
 	int h = 256;
-	renderer_t * renderer = renderer_new(w, h, &bgcolor, 1);
+	Renderer * renderer = renderer_new(w, h, &bgcolor, 1);
 	
 	assert(renderer->imgWidth == w);
 	assert(renderer->imgHeight == h);

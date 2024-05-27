@@ -18,48 +18,48 @@
 #endif
 
 typedef struct {
-	vec3_t lb;
-	vec3_t rb;
-	vec3_t lt;
-	vec3_t rt;
-	vec3_t normal;
-} plane_t;
+	Vec3 lb;
+	Vec3 rb;
+	Vec3 lt;
+	Vec3 rt;
+	Vec3 normal;
+} Plane;
 
 typedef struct {
-	plane_t left;
-	plane_t right;
-	plane_t top;
-	plane_t bottom;
-	plane_t near;
-	plane_t far;
-} frustum_t;
+	Plane left;
+	Plane right;
+	Plane top;
+	Plane bottom;
+	Plane near;
+	Plane far;
+} Frustum;
 
 typedef struct {
-	mat4_t view;
-	mat4_t projection;
-	mat4_t transformation;
-	vec3_t forward;
-	vec3_t left;
-	vec3_t up;
-	vec3_t from;
-	vec3_t to;
-	frustum_t frustum;
+	Mat4 view;
+	Mat4 projection;
+	Mat4 transformation;
+	Vec3 forward;
+	Vec3 left;
+	Vec3 up;
+	Vec3 from;
+	Vec3 to;
+	Frustum frustum;
 	float l,r,t,b,n,f;
-} camera_t;
+} Camera;
 
-void setviewport(camera_t *  camera, const float l,const float r,const float t,const float b,const float near,const float far);
+void setviewport(Camera *  camera, const float l,const float r,const float t,const float b,const float near,const float far);
 
-void config_camera(camera_t *  newcamera, const vec3_t *  from, const vec3_t *  to, 
+void config_camera(Camera *  newcamera, const Vec3 *  from, const Vec3 *  to, 
 				   const float l, const float r, const float t, const float b, const float near, const float far);
-void config_camera_perspective(camera_t *  newcamera, const vec3_t *  from, const vec3_t *  to, 
+void config_camera_perspective(Camera *  newcamera, const Vec3 *  from, const Vec3 *  to, 
 				   const float l, const float r, const float t, const float b, const float near, const float far);
 
-void camera_lookAt(camera_t *  camera, const vec3_t *  from, const vec3_t *  to);
+void camera_lookAt(Camera *  camera, const Vec3 *  from, const Vec3 *  to);
 
-void createProjectionOrtho(camera_t *  camera, const float l, const float r, const float t, const float b, const float near, const float far);
+void createProjectionOrtho(Camera *  camera, const float l, const float r, const float t, const float b, const float near, const float far);
 
-void createProjectionPerspective(camera_t *  camera, const float l, const float r, const float t, const float b, const float near, const float far);
+void createProjectionPerspective(Camera *  camera, const float l, const float r, const float t, const float b, const float near, const float far);
 
-void print_camera(const camera_t *  camera);
+void print_camera(const Camera *  camera);
 
 #endif

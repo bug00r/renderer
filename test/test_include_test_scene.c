@@ -1,6 +1,6 @@
-void test_render_test_scene(renderer_t * renderer, bool isperspective) {
-	//scene_t * scene = scene_create_test();
-	scene_t * scene = scene_create_test_all(2.f);
+void test_render_test_scene(Renderer * renderer, bool isperspective) {
+	//Scene * scene = scene_create_test();
+	Scene * scene = scene_create_test_all(2.f);
 	
 	render_scene(renderer, scene);
 	
@@ -19,8 +19,8 @@ void test_render_test_scene(renderer_t * renderer, bool isperspective) {
 	
 	//addBackgroundToRenderer(renderer);
 	
-	mat3_t * rotz_mat = create_rot_z_mat(0.f);
-	mat3_t * rotx_mat = create_rot_x_mat(45.f);
+	Mat3 * rotz_mat = create_rot_z_mat(0.f);
+	Mat3 * rotx_mat = create_rot_x_mat(45.f);
 	mat3_mul(rotz_mat, rotx_mat);
 	
 	mat_mul_scene(scene, rotz_mat);

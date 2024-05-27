@@ -1,7 +1,7 @@
-void test_render_cube(renderer_t * renderer, bool isperspective) {
+void test_render_cube(Renderer * renderer, bool isperspective) {
 
-	vec3_t center = { 0.f, 0.f, 0.f };
-	mesh_t * cube = create_cube3_center(&center, 1.f);
+	Vec3 center = { 0.f, 0.f, 0.f };
+	Mesh * cube = create_cube3_center(&center, 1.f);
 	
 	render_mesh(renderer, cube);
 	
@@ -19,8 +19,8 @@ void test_render_cube(renderer_t * renderer, bool isperspective) {
 	
 	renderer_clear_frame(renderer);
 	
-	mat3_t * rotz_mat = create_rot_z_mat(45.f);
-	mat3_t * rotx_mat = create_rot_x_mat(45.f);
+	Mat3 * rotz_mat = create_rot_z_mat(45.f);
+	Mat3 * rotx_mat = create_rot_x_mat(45.f);
 	mat3_mul(rotz_mat, rotx_mat);
 	
 	mat_mul_mesh(cube, rotz_mat);

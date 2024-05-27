@@ -1,7 +1,7 @@
 #include "camera.h"
 
-void setviewport(camera_t *  camera, const float l,const float r,const float t,const float b,const float near,const float far){
-	camera_t * curcam = camera;
+void setviewport(Camera *  camera, const float l,const float r,const float t,const float b,const float near,const float far){
+	Camera * curcam = camera;
 	curcam->l = l;
 	curcam->r = r;
 	curcam->t = t;
@@ -10,9 +10,9 @@ void setviewport(camera_t *  camera, const float l,const float r,const float t,c
 	curcam->f = far;
 }
 
-void config_camera(camera_t *  camera, const vec3_t *  from, const vec3_t *  to, 
+void config_camera(Camera *  camera, const Vec3 *  from, const Vec3 *  to, 
                    const float l,const float r,const float t,const float b,const float near,const float far) {
-	camera_t *  curcam = camera;
+	Camera *  curcam = camera;
 	setviewport(curcam,l,r,t,b,near,far);
 	camera_lookAt(curcam, from, to);
 	createProjectionOrtho(curcam, l, r, t, b, near, far);
@@ -22,9 +22,9 @@ void config_camera(camera_t *  camera, const vec3_t *  from, const vec3_t *  to,
 	//mat4_mul_dest(&curcam->transformation ,&curcam->projection, &curcam->view);
 }
 
-void config_camera_perspective(camera_t *  camera, const vec3_t *  from, const vec3_t *  to, 
+void config_camera_perspective(Camera *  camera, const Vec3 *  from, const Vec3 *  to, 
                    const float l,const float r,const float t,const float b,const float near,const float far) {
-	camera_t *  curcam = camera;
+	Camera *  curcam = camera;
 	setviewport(curcam,l,r,t,b,near,far);
 	camera_lookAt(curcam, from, to);
 	createProjectionPerspective(curcam, l, r, t, b, near, far);
@@ -34,9 +34,9 @@ void config_camera_perspective(camera_t *  camera, const vec3_t *  from, const v
 	//mat4_copy(&curcam->transformation ,&curcam->projection);
 }
 
-static void __calc_normal(plane_t *plane) {
-	plane_t *p = plane;
-	vec3_t tmp, tmp2;
+static void __calc_normal(Plane *plane) {
+	Plane *p = plane;
+	Vec3 tmp, tmp2;
 	vec3_sub_dest(&tmp, &p->rb, &p->lb);
 	vec3_sub_dest(&tmp2, &p->lt, &p->lb);
 
@@ -44,43 +44,43 @@ static void __calc_normal(plane_t *plane) {
 	vec3_normalize(&p->normal);
 }
 
-static void __calc_frustum(camera_t *  camera) {
-	camera_t *cam = camera;
-	frustum_t *frustum = &cam->frustum;
-	plane_t *near = &frustum->near;
-	plane_t *far = &frustum->far;
-	plane_t *left = &frustum->left;
-	plane_t *right = &frustum->right;
-	plane_t *top = &frustum->top;
-	plane_t *bottom = &frustum->bottom;
+static void __calc_frustum(Camera *  camera) {
+	Camera *cam = camera;
+	Frustum *frustum = &cam->frustum;
+	Plane *near = &frustum->near;
+	Plane *far = &frustum->far;
+	Plane *left = &frustum->left;
+	Plane *right = &frustum->right;
+	Plane *top = &frustum->top;
+	Plane *bottom = &frustum->bottom;
 
-	vec3_t tmp;
-	vec3_t tmp2;
+	Vec3 tmp;
+	Vec3 tmp2;
 
-	vec3_t centerNear;
+	Vec3 centerNear;
 	vec3_negate_dest(&centerNear, &cam->forward);
 	vec3_mul_dest(&tmp, &centerNear, cam->n);
 	vec3_add_dest(&centerNear, &cam->from, &tmp);
 
-	vec3_t nearUpDir;
+	Vec3 nearUpDir;
 	vec3_mul_dest(&nearUpDir, &cam->up, cam->t);
 
-	vec3_t nearDownDir;
+	Vec3 nearDownDir;
 	vec3_negate_dest(&nearDownDir, &nearUpDir);
 
-	vec3_t nearTopRight;
+	Vec3 nearTopRight;
 	vec3_mul_dest(&tmp, &cam->left, cam->r); //cam->left means right :D..don't ask yet :P
 	vec3_add_n_dest(&nearTopRight, 3,&centerNear, &nearUpDir, &tmp);
 	
-	vec3_t nearTopLeft;
+	Vec3 nearTopLeft;
 	vec3_negate_dest(&tmp2, &tmp);
 	vec3_add_n_dest(&nearTopLeft, 3, &centerNear, &nearUpDir, &tmp2);
 
-	vec3_t nearBottomRight;
+	Vec3 nearBottomRight;
 	vec3_mul_dest(&tmp, &cam->left, cam->r); //cam->left means right :D..don't ask yet :P
 	vec3_add_n_dest(&nearBottomRight, 3, &centerNear, &nearDownDir, &tmp);
 
-	vec3_t nearBottomLeft;
+	Vec3 nearBottomLeft;
 	vec3_negate_dest(&tmp2, &tmp);
 	vec3_add_n_dest(&nearBottomLeft, 3, &centerNear, &nearDownDir, &tmp2);
 
@@ -92,30 +92,30 @@ static void __calc_frustum(camera_t *  camera) {
 
 	float farFactor = cam->f / cam->n;
 
-	vec3_t centerFar;
+	Vec3 centerFar;
 	vec3_negate_dest(&centerFar, &cam->forward);
 	vec3_mul_dest(&tmp, &centerFar, cam->f);
 	vec3_add_dest(&centerFar, &cam->from, &tmp);
 
-	vec3_t farUpDir;
+	Vec3 farUpDir;
 	vec3_mul_dest(&farUpDir, &cam->up, cam->t * farFactor);
 
-	vec3_t farDownDir;
+	Vec3 farDownDir;
 	vec3_negate_dest(&farDownDir, &farUpDir);
 
-	vec3_t farTopRight;
+	Vec3 farTopRight;
 	vec3_mul_dest(&tmp, &cam->left, cam->r * farFactor); //cam->left means right :D..don't ask yet :P
 	vec3_add_n_dest(&farTopRight, 3,&centerFar, &farUpDir, &tmp);
 	
-	vec3_t farTopLeft;
+	Vec3 farTopLeft;
 	vec3_negate_dest(&tmp2, &tmp);
 	vec3_add_n_dest(&farTopLeft, 3, &centerFar, &farUpDir, &tmp2);
 
-	vec3_t farBottomRight;
+	Vec3 farBottomRight;
 	vec3_mul_dest(&tmp, &cam->left, cam->r * farFactor); //cam->left means right :D..don't ask yet :P
 	vec3_add_n_dest(&farBottomRight, 3, &centerFar, &farDownDir, &tmp);
 
-	vec3_t farBottomLeft;
+	Vec3 farBottomLeft;
 	vec3_negate_dest(&tmp2, &tmp);
 	vec3_add_n_dest(&farBottomLeft, 3, &centerFar, &farDownDir, &tmp2);
 
@@ -161,13 +161,13 @@ static void __calc_frustum(camera_t *  camera) {
 }
 
 void 
-camera_lookAt(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
+camera_lookAt(Camera *  camera, const Vec3 *  from, const Vec3 *  to) {
 	
-	const vec3_t *  eye = from;
-	camera_t *  cam = camera;
-	vec3_t * f = &cam->forward;
-	vec3_t * l = &cam->left;
-	vec3_t * u = &cam->up;
+	const Vec3 *  eye = from;
+	Camera *  cam = camera;
+	Vec3 * f = &cam->forward;
+	Vec3 * l = &cam->left;
+	Vec3 * u = &cam->up;
 
 	vec3_copy_dest(&cam->from, from);
 	vec3_copy_dest(&cam->to, to);
@@ -175,7 +175,7 @@ camera_lookAt(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
 	vec3_sub_dest(f, eye, to);
 	vec3_normalize(f);
 
-	vec3_t tmp = { 0.f, 1.f, 0.f};
+	Vec3 tmp = { 0.f, 1.f, 0.f};
 	vec3_normalize(&tmp);
 	
 	vec3_cross_dest(l, &tmp, f);
@@ -186,14 +186,14 @@ camera_lookAt(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
 	
 	__calc_frustum(cam);
 
-	mat4_t m = { l->x	,u->x,	f->x	,eye->x,	
+	Mat4 m = { l->x	,u->x,	f->x	,eye->x,	
 				 l->y	,u->y,	f->y	,eye->y,	
 				 l->z	,u->z,	f->z	,eye->z, 	
 				 0.f	,0.f ,	0.f		,1.f };
 	
 	//inverse: Base matrix, below complex, could be => mat4_inverse_dest(&cam->projection, &projection);
-	mat4_t * dest = &cam->projection;
-	mat3_t t = { m._22, m._23, m._24, m._32, m._33, m._34, m._42, m._43, m._44};
+	Mat4 * dest = &cam->projection;
+	Mat3 t = { m._22, m._23, m._24, m._32, m._33, m._34, m._42, m._43, m._44};
 
 	dest->_11 = ((t._11*t._22*t._33) + (t._12*t._23*t._31) + (t._13*t._21*t._32) -
 				 (t._13*t._22*t._31) - (t._12*t._21*t._33) - (t._11*t._23*t._32));//mat3_determinant(&temp);
@@ -278,8 +278,8 @@ camera_lookAt(camera_t *  camera, const vec3_t *  from, const vec3_t *  to) {
 }
 
 void 
-createProjectionOrtho(camera_t *  camera, const float l,const float r,const float t,const float b,const float near,const float far) {
-	camera_t *  cam = camera;
+createProjectionOrtho(Camera *  camera, const float l,const float r,const float t,const float b,const float near,const float far) {
+	Camera *  cam = camera;
 	cam->view._11 = 2.f/(r-l);
 	cam->view._12 = 0.f;
 	cam->view._13 = 0.f;
@@ -305,8 +305,8 @@ createProjectionOrtho(camera_t *  camera, const float l,const float r,const floa
 	//This is the openGL
 #endif
 void
-createProjectionPerspective(camera_t *  camera, const float l,const float r,const float t,const float b,const float near,const float far) {
-	camera_t *  cam = camera;
+createProjectionPerspective(Camera *  camera, const float l,const float r,const float t,const float b,const float near,const float far) {
+	Camera *  cam = camera;
 	float scale = 1 / tan(90.f * 0.5f * M_PI / 180.f); 
 	cam->view._11 = scale;//(2.f*near)/(r-l);//scale;//
 	cam->view._12 = 0.f;
@@ -330,8 +330,8 @@ createProjectionPerspective(camera_t *  camera, const float l,const float r,cons
 
 }
 
-static void print_plane(const plane_t *plane) {
-	const plane_t *p = plane;
+static void print_plane(const Plane *plane) {
+	const Plane *p = plane;
 	printf("lb: ");vec3_print(&p->lb);
 	printf("rb: ");vec3_print(&p->rb);
 	printf("lt: ");vec3_print(&p->lt);
@@ -339,8 +339,8 @@ static void print_plane(const plane_t *plane) {
 	printf("normal: ");vec3_print(&p->normal);
 }
 
-static void print_frustum(const frustum_t *frustum) {
-	const frustum_t *fu = frustum;
+static void print_frustum(const Frustum *frustum) {
+	const Frustum *fu = frustum;
 	printf("near plane:\n");
 	print_plane(&fu->near);
 	printf("far plane:\n");
@@ -356,8 +356,8 @@ static void print_frustum(const frustum_t *frustum) {
 }
 
 void 
-print_camera(const camera_t *  camera) {
-	const camera_t *  cam = camera;
+print_camera(const Camera *  camera) {
+	const Camera *  cam = camera;
 	printf("from.:\t"); vec3_print(&cam->from);
 	printf("to:\t"); vec3_print(&cam->to);
 	printf("forw.:\t"); vec3_print(&cam->forward);

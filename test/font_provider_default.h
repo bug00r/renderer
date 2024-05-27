@@ -5,6 +5,6 @@
 #include "vec.h"
 #include "r_font.h"
 
-rf_provider_t* get_default_provider();
+RFProvider* get_default_provider();
 
 #endif

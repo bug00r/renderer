@@ -1,6 +1,6 @@
-void test_render_points(renderer_t * renderer, bool isperspective) {
-	vec3_t p = { 0.0f, 0.0f, 0.f };
-	mesh_t * points = create_point3(&p);
+void test_render_points(Renderer * renderer, bool isperspective) {
+	Vec3 p = { 0.0f, 0.0f, 0.f };
+	Mesh * points = create_point3(&p);
 	
 	render_mesh(renderer, points);
 	

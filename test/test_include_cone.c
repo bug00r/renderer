@@ -1,6 +1,6 @@
-void test_render_cone(renderer_t * renderer, bool isperspective) {
-	//	mesh_t * createcone(float radius, float height, unsigned int lats, bool showbottom);
-	mesh_t * cone = createcone(0.5f, 1.5f, 10, true);
+void test_render_cone(Renderer * renderer, bool isperspective) {
+	//	Mesh * createcone(float radius, float height, unsigned int lats, bool showbottom);
+	Mesh * cone = createcone(0.5f, 1.5f, 10, true);
 	
 	render_mesh(renderer, cone);
 	
@@ -16,7 +16,7 @@ void test_render_cone(renderer_t * renderer, bool isperspective) {
 		(void)(isperspective);
 	#endif
 	
-	mat3_t * rotx_mat = create_rot_x_mat(-45.f);
+	Mat3 * rotx_mat = create_rot_x_mat(-45.f);
 	mat_mul_mesh(cone, rotx_mat);
 	free(rotx_mat);
 	

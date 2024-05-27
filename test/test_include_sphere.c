@@ -1,5 +1,5 @@
-void test_render_sphere(renderer_t * renderer, bool isperspective) {
-	mesh_t * sphere = createsphere(0.5f, 50, 50);
+void test_render_sphere(Renderer * renderer, bool isperspective) {
+	Mesh * sphere = createsphere(0.5f, 50, 50);
 
 	render_mesh(renderer, sphere);
 	
@@ -16,8 +16,8 @@ void test_render_sphere(renderer_t * renderer, bool isperspective) {
 	#endif
 	renderer_clear_frame(renderer);
 	
-	mat3_t * rotz_mat = create_rot_z_mat(45.f);
-	mat3_t * rotx_mat = create_rot_x_mat(225.f);
+	Mat3 * rotz_mat = create_rot_z_mat(45.f);
+	Mat3 * rotx_mat = create_rot_x_mat(225.f);
 	mat3_mul(rotz_mat, rotx_mat);
 	
 	mat_mul_mesh(sphere, rotz_mat);

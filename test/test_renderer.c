@@ -40,9 +40,9 @@ static void test_frustum() {
 
 	int width		= 512;
 	int height		= 512;
-	vec3_t from 	= { 0.f, 2.f, 2.f };
-	vec3_t to 		= { 0.f, 0.f, 0.f };
-	cRGB_t bgcolor	= { 0.f, 0.f, 0.f };
+	Vec3 from 	= { 0.f, 2.f, 2.f };
+	Vec3 to 		= { 0.f, 0.f, 0.f };
+	ColorRGB bgcolor	= { 0.f, 0.f, 0.f };
 	unsigned int samplestep = 1;
 	float zoom 		= 1.f;
 	float view 		= .5f;
@@ -52,7 +52,7 @@ static void test_frustum() {
 	float top 		= view;
 	float near		= 1.f;
 	float far		= 3.f;
-	renderer_t * renderer = create_renderer_perspective( width, height, &from, &to, zoom, left, right, top, bottom, near, far, &bgcolor, samplestep);
+	Renderer * renderer = create_renderer_perspective( width, height, &from, &to, zoom, left, right, top, bottom, near, far, &bgcolor, samplestep);
 
 	#ifdef debug
 	print_camera(&renderer->camera);
@@ -71,7 +71,7 @@ main() {
 
 	test_renderer_creation();
 	
-	renderer_t *renderer = create_test_base_renderer(1);
+	Renderer *renderer = create_test_base_renderer(1);
 	
 	test_render_cylinder(renderer, renderer->projection == RP_PERSPECTIVE);
 	renderer_clear_frame(renderer);

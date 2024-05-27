@@ -1,10 +1,10 @@
-void test_render_square_block(renderer_t * renderer, bool isperspective) {
+void test_render_square_block(Renderer * renderer, bool isperspective) {
 	#ifdef debug
 		printf(">> test render square block\n");
 	#endif
 
-	vec3_t center = { 0.f, 0.f, -2.f };
-	mesh_t * square_block = create_square_block(&center, 1.f, 2.f, 3.f, 1, 2, 3);
+	Vec3 center = { 0.f, 0.f, -2.f };
+	Mesh * square_block = create_square_block(&center, 1.f, 2.f, 3.f, 1, 2, 3);
 	
 	render_mesh(renderer, square_block);
 	
@@ -26,9 +26,9 @@ void test_render_square_block(renderer_t * renderer, bool isperspective) {
 		printf("max_z:\t%f\n", renderer->max_z);
 	#endif
 	
-	mat3_t * rotz_mat = create_rot_z_mat(0.f);
-	mat3_t * rotx_mat = create_rot_x_mat(20.f);
-	mat3_t * roty_mat = create_rot_y_mat(20.f);
+	Mat3 * rotz_mat = create_rot_z_mat(0.f);
+	Mat3 * rotx_mat = create_rot_x_mat(20.f);
+	Mat3 * roty_mat = create_rot_y_mat(20.f);
 	mat3_mul(rotz_mat, rotx_mat);
 	mat3_mul(rotz_mat, roty_mat);
 	mat_mul_mesh(square_block, rotz_mat);

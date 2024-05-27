@@ -1,6 +1,6 @@
-void test_render_cylinder(renderer_t * renderer, bool isperspective) {
+void test_render_cylinder(Renderer * renderer, bool isperspective) {
 	//createcylinder(float radius, float height, unsigned int longs, unsigned lats, bool showtop, bool showbottom)
-	mesh_t * cylinder = createcylinder(0.5f, 1.5f, 30, 30, true, true);
+	Mesh * cylinder = createcylinder(0.5f, 1.5f, 30, 30, true, true);
 	
 	render_mesh(renderer, cylinder);
 	
@@ -18,8 +18,8 @@ void test_render_cylinder(renderer_t * renderer, bool isperspective) {
 		(void)(isperspective);
 	#endif
 	
-	mat3_t * rotx_mat = create_rot_x_mat(-45.f);
-	mat3_t * roty_mat = create_rot_y_mat(0.f);
+	Mat3 * rotx_mat = create_rot_x_mat(-45.f);
+	Mat3 * roty_mat = create_rot_y_mat(0.f);
 	mat3_mul(rotx_mat, roty_mat);
 	
 	mat_mul_mesh(cylinder, rotx_mat);
